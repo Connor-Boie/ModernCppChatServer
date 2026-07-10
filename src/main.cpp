@@ -9,9 +9,10 @@ int main()
         Socket socket;
 
         socket.bind(8080);
+        socket.listen(10);
 
         std::cout
-            << "Server bound to port 8080.\n";
+            << "Server listening on port 8080.\n";
     }
     catch(const std::exception& e)
     {

@@ -41,6 +41,14 @@ void Socket::bind(int port)
         reinterpret_cast<sockaddr*>(&address),
         sizeof(address)) == -1)
     {
-        throw std::runtime_error("Failed to bind socket");
+        throw std::runtime_error("Failed to bind socket.");
+    }
+}
+
+void Socket::listen(int backlog)
+{
+    if (::listen(m_fd, backlog) == -1)
+    {
+        throw std::runtime_error("Failed to listen on socket.");
     }
 }

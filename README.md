@@ -24,6 +24,22 @@ Current milestone:
 - RAII-based Socket abstraction
 - TCP socket creation using Linux socket APIs
 - Socket binding to an IP address and port
+- Socket listening for incoming client connections
+
+## Implemented Features
+
+### Networking
+
+- Created a RAII-based C++ Socket wrapper
+- Created TCP sockets using Linux socket APIs
+- Bound sockets to IPv4 addresses and ports
+- Configured sockets to listen for incoming connections
+
+### Build System
+
+- CMake-based build configuration
+- C++17 standard enabled
+- Compiler warnings enabled (`-Wall`, `-Wextra`, `-Wpedantic`)
 
 ## Build
 
@@ -35,14 +51,31 @@ cmake ..
 cmake --build .
 ```
 
+## Run
+
+```bash
+./ModernCppChatServer
+```
+
+Current output:
+
+```
+Server listening on port 8080.
+```
+
 ## Roadmap
 
 - [x] Project setup
 - [x] Socket abstraction
 - [x] Create TCP socket
-- [x] Listen for connections
-- [ ] Accept multiple clients
+- [x] Bind socket to address and port
+- [x] Listen for incoming connections
+- [ ] Accept client connections
+- [ ] Client connection management
+- [ ] Receive and send messages
+- [ ] Multiple client support
 - [ ] Thread-per-client model
-- [ ] Message broadcasting
-- [ ] Logging
+- [ ] Thread pool architecture
+- [ ] Synchronization with mutexes
+- [ ] Logging system
 - [ ] Unit tests
