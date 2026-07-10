@@ -8,10 +8,10 @@ int main()
     {
         Socket socket;
 
+        socket.bind(8080);
+
         std::cout
-            << "Socket created with fd: "
-            << socket.getFd()
-            << "\n";
+            << "Server bound to port 8080.\n";
     }
     catch(const std::exception& e)
     {
