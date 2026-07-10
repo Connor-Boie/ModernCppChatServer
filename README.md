@@ -23,6 +23,7 @@ Current milestone:
 - Project structure
 - RAII-based Socket abstraction
 - TCP socket creation using Linux socket APIs
+- Socket binding to an IP address and port
 
 ## Build
 
@@ -39,7 +40,7 @@ cmake --build .
 - [x] Project setup
 - [x] Socket abstraction
 - [x] Create TCP socket
-- [ ] Listen for connections
+- [x] Listen for connections
 - [ ] Accept multiple clients
 - [ ] Thread-per-client model
 - [ ] Message broadcasting
