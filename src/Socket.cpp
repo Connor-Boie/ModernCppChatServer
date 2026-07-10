@@ -52,3 +52,19 @@ void Socket::listen(int backlog)
         throw std::runtime_error("Failed to listen on socket.");
     }
 }
+
+int Socket::accept()
+{
+    int client_fd = ::accept(
+        m_fd,
+        nullptr,
+        nullptr
+    );
+
+    if (client_fd == -1)
+    {
+        throw std::runtime_error("Failed to accept client.");
+    }
+
+    return client_fd;
+}

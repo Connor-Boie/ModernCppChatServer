@@ -11,6 +11,8 @@ public:
     void bind(int port);
     void listen(int backlog);
 
+    int accept();
+
 private:
     int m_fd;
 };

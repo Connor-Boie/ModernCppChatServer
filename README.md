@@ -25,6 +25,7 @@ Current milestone:
 - TCP socket creation using Linux socket APIs
 - Socket binding to an IP address and port
 - Socket listening for incoming client connections
+- Accepting client connections
 
 ## Implemented Features
 
@@ -34,6 +35,7 @@ Current milestone:
 - Created TCP sockets using Linux socket APIs
 - Bound sockets to IPv4 addresses and ports
 - Configured sockets to listen for incoming connections
+- Accepted incoming client connections using TCP sockets
 
 ### Build System
 
@@ -53,14 +55,28 @@ cmake --build .
 
 ## Run
 
+Start the server:
+
 ```bash
 ./ModernCppChatServer
 ```
 
-Current output:
+The server will start listening:
 
 ```
-Server listening on port 8080.
+Server listening on port 8080
+```
+
+Connect using netcat:
+
+```bash
+nc localhost 8080
+```
+
+The server will report the client connection:
+
+```
+Client connected! fd: 4
 ```
 
 ## Roadmap
@@ -70,7 +86,7 @@ Server listening on port 8080.
 - [x] Create TCP socket
 - [x] Bind socket to address and port
 - [x] Listen for incoming connections
-- [ ] Accept client connections
+- [x] Accept client connections
 - [ ] Client connection management
 - [ ] Receive and send messages
 - [ ] Multiple client support

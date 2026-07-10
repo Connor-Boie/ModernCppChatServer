@@ -13,6 +13,13 @@ int main()
 
         std::cout
             << "Server listening on port 8080.\n";
+
+        int client_fd = socket.accept();
+
+        std::cout
+            << "Client connected! fd: "
+            << client_fd
+            << "\n";
     }
     catch(const std::exception& e)
     {
