@@ -11,3 +11,9 @@ add_executable(ModernCppChatServer
 )
 
 target_include_directories(ModernCppChatServer PRIVATE include)
+
+target_compile_options(ModernCppChatServer PRIVATE
+    -Wall
+    -Wextra
+    -Wpedantic
+)
