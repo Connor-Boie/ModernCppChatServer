@@ -96,3 +96,18 @@ std::string Socket::receive()
         buffer.data(),
         bytesReceived);
 }
+
+void Socket::send(const std::string& message)
+{
+    ssize_t bytesSent = 
+        ::send(
+            m_fd,
+            message.c_str(),
+            message.size(),
+            0);
+        
+    if (bytesSent == -1)
+    {
+        throw std::runtime_error("Failed to send data.");
+    }
+}

@@ -25,6 +25,9 @@ int main()
             << "Received: "
             << message
             << "\n";
+
+        client.send("Message received!\n");
+
     }
     catch(const std::exception& e)
     {

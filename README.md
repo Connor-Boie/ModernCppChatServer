@@ -27,6 +27,7 @@ Current milestone:
 - Socket listening for incoming client connections
 - Accepting client connections
 - Receiving a message from the client
+- Sending a message to the connected client.
 
 ## Implemented Features
 
@@ -104,7 +105,8 @@ Received: hello world
 - [x] Listen for incoming connections
 - [x] Accept client connections
 - [x] Client connection management
-- [x] Receive and send messages
+- [x] Receive client messages
+- [x] Send message to connected client
 - [ ] Multiple client support
 - [ ] Thread-per-client model
 - [ ] Thread pool architecture

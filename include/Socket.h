@@ -17,6 +17,7 @@ public:
     Socket accept();
 
     std::string receive();
+    void send(const std::string& message);
 
 private:
     int m_fd;
