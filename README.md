@@ -1,18 +1,30 @@
-# ModernCppChatServer
-A multithreaded TCP chat server built with modern C++17, CMake, and Linux sockets.
-
 ## Goals
 
 This project is being built incrementally to explore:
 
-- Modern C++17
-- Linux TCP sockets
+- Modern C++17 programming practices
+- Linux/POSIX socket programming
+- TCP/IP networking fundamentals
 - Object-oriented design
-- Resource management with RAII
-- Multithreading
-- Synchronization with mutexes
-- CMake
+- Resource management using RAII
+- Move semantics and ownership models
+- Multithreading and synchronization
+- CMake build systems
 - Unit testing
+
+## Concepts Demonstrated
+
+- Modern C++17
+- Object-oriented design
+- RAII resource management
+- Move semantics and ownership transfer
+- Deleted copy operations for unique resource ownership
+- POSIX socket programming
+- TCP/IP networking
+- Multithreading with `std::thread`
+- Thread synchronization with `std::mutex`
+- RAII-based locking with `std::lock_guard`
+- CMake build system
 
 ## Current Status
 
@@ -20,14 +32,10 @@ In Progress
 
 Current milestone:
 
-- Project structure
-- RAII-based Socket abstraction
-- TCP socket creation using Linux socket APIs
-- Socket binding to an IP address and port
-- Socket listening for incoming client connections
-- Accepting client connections
-- Receiving a message from the client
-- Sending a message to the connected client.
+- TCP server capable of accepting client connections
+- Client communication using send/receive operations
+- Multiple clients handled concurrently using threads
+- Thread-safe logging using mutex protection
 
 ## Implemented Features
 
@@ -44,16 +52,23 @@ Current milestone:
 ### Modern C++
 
 - C++17
-- RAII for resource management
-- Move semantics for safe ownership transfer
-- Deleted copy operations for unique resource ownership
-- Exception-based error handling
 - Encapsulation through an object-oriented `Socket` abstraction
+- RAII for automatic resource cleanup
+- Move constructor and move assignment for safe socket ownership transfer
+- Deleted copy constructor and copy assignment operator to prevent invalid resource duplication
+- Exception-based error handling
+
+### Concurrency
+
+- Thread-per-client architecture using `std::thread`
+- Independent client handling
+- Mutex protection for shared output resources
+- RAII-based locking using `std::lock_guard`
 
 ### Build System
 
 - CMake-based build configuration
-- C++17 standard enabled
+- Out-of-source builds
 - Compiler warnings enabled (`-Wall`, `-Wextra`, `-Wpedantic`)
 
 ## Build
@@ -74,29 +89,25 @@ Start the server:
 ./ModernCppChatServer
 ```
 
-The server will start listening:
-
-```
-Server listening on port 8080
-```
-
 Connect using netcat:
 
 ```bash
 nc localhost 8080
 ```
 
-Send a message:
+Example:
 
-```bash
-hello world
+Server:
 ```
-
-The server will report the received message from the client:
-
-```
-Client connected!
+Server listening on port 8080
+Client connected
 Received: hello world
+```
+
+Client:
+```
+hello world
+Message received!
 ```
 
 ## Roadmap
@@ -110,9 +121,10 @@ Received: hello world
 - [x] Receive data from clients
 - [x] Send responses to clients
 - [x] Implement move semantics for socket ownership
-- [ ] Support multiple simultaneous clients
-- [ ] Thread-per-client architecture
-- [ ] Synchronization with mutexes
-- [ ] Broadcast messages to all clients
+- [x] Thread-per-client architecture
+- [x] Synchronization with mutexes
+- [ ] Client connection manager
+- [ ] Broadcast messages between clients
+- [ ] Graceful client disconnect handling
 - [ ] Logging system
 - [ ] Unit tests

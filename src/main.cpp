@@ -1,7 +1,10 @@
 #include "Socket.h"
 
 #include <iostream>
+#include <mutex>
 #include <thread>
+
+std::mutex coutMutex;
 
 void handleClient(Socket client)
 {
@@ -11,10 +14,14 @@ void handleClient(Socket client)
         {
             std:: string message = client.receive();
 
-            std::cout 
-                << "Received: "
-                << message
-                << "\n";
+            {
+                std::lock_guard<std::mutex> lock(coutMutex);
+
+                std::cout 
+                    << "Received: "
+                    << message
+                    << "\n";
+            }
 
             client.send("Message received!\n");
         }
@@ -43,8 +50,12 @@ int main()
         {
             Socket client = server.accept();
 
-            std::cout
-                << "Client connected.\n";
+            {
+                std::lock_guard<std::mutex> lock(coutMutex);
+
+                std::cout
+                    << "Client connected.\n";
+            }
 
             std:: thread clientThread(
                 handleClient,
