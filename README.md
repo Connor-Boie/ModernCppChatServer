@@ -26,6 +26,7 @@ Current milestone:
 - Socket binding to an IP address and port
 - Socket listening for incoming client connections
 - Accepting client connections
+- Receiving a message from the client
 
 ## Implemented Features
 
@@ -36,6 +37,14 @@ Current milestone:
 - Bound sockets to IPv4 addresses and ports
 - Configured sockets to listen for incoming connections
 - Accepted incoming client connections using TCP sockets
+- Receiving data from connected clients
+
+### Modern C++
+
+- C++17
+- RAII for resource management
+- Exception-based error handling
+- Encapsulation through an object-oriented `Socket` abstraction
 
 ### Build System
 
@@ -73,10 +82,17 @@ Connect using netcat:
 nc localhost 8080
 ```
 
-The server will report the client connection:
+Send a message:
+
+```bash
+hello world
+```
+
+The server will report the received message from the client:
 
 ```
-Client connected! fd: 4
+Client connected!
+Received: hello world
 ```
 
 ## Roadmap
@@ -87,8 +103,8 @@ Client connected! fd: 4
 - [x] Bind socket to address and port
 - [x] Listen for incoming connections
 - [x] Accept client connections
-- [ ] Client connection management
-- [ ] Receive and send messages
+- [x] Client connection management
+- [x] Receive and send messages
 - [ ] Multiple client support
 - [ ] Thread-per-client model
 - [ ] Thread pool architecture

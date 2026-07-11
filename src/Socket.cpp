@@ -1,8 +1,10 @@
 #include "Socket.h"
 
-#include <sys/socket.h>
+#include <array>
 #include <netinet/in.h>
+#include <sys/socket.h>
 #include <stdexcept>
+#include <string>
 #include <unistd.h>
 
 Socket::Socket()
@@ -13,6 +15,11 @@ Socket::Socket()
     {
         throw std::runtime_error("Failed to create socket");
     }
+}
+
+Socket::Socket(int fd)
+    : m_fd(fd)
+{
 }
 
 Socket::~Socket()
@@ -53,7 +60,7 @@ void Socket::listen(int backlog)
     }
 }
 
-int Socket::accept()
+Socket Socket::accept()
 {
     int client_fd = ::accept(
         m_fd,
@@ -66,5 +73,26 @@ int Socket::accept()
         throw std::runtime_error("Failed to accept client.");
     }
 
-    return client_fd;
+    return Socket(client_fd);
+}
+
+std::string Socket::receive()
+{
+    std::array<char, 1024> buffer{};
+
+    ssize_t bytesReceived = 
+        recv(
+            m_fd,
+            buffer.data(),
+            buffer.size(),
+            0);
+    
+    if (bytesReceived == -1)
+    {
+        throw std::runtime_error("Failed to receive data.");
+    }
+
+    return std::string(
+        buffer.data(),
+        bytesReceived);
 }

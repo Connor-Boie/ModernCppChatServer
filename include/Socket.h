@@ -1,9 +1,12 @@
 #pragma once
 
+#include <string>
+
 class Socket
 {
 public:
     Socket();
+    explicit Socket(int fd);
     ~Socket();
 
     int getFd() const;
@@ -11,7 +14,9 @@ public:
     void bind(int port);
     void listen(int backlog);
 
-    int accept();
+    Socket accept();
+
+    std::string receive();
 
 private:
     int m_fd;
