@@ -33,17 +33,20 @@ Current milestone:
 
 ### Networking
 
-- Created a RAII-based C++ Socket wrapper
-- Created TCP sockets using Linux socket APIs
-- Bound sockets to IPv4 addresses and ports
-- Configured sockets to listen for incoming connections
-- Accepted incoming client connections using TCP sockets
+- RAII-based `Socket` class for automatic socket resource management
+- TCP socket creation using the Linux/POSIX socket API
+- IPv4 socket binding to configurable ports
+- Listening for incoming TCP client connections
+- Accepting client connections
 - Receiving data from connected clients
+- Sending responses to connected clients
 
 ### Modern C++
 
 - C++17
 - RAII for resource management
+- Move semantics for safe ownership transfer
+- Deleted copy operations for unique resource ownership
 - Exception-based error handling
 - Encapsulation through an object-oriented `Socket` abstraction
 
@@ -104,12 +107,12 @@ Received: hello world
 - [x] Bind socket to address and port
 - [x] Listen for incoming connections
 - [x] Accept client connections
-- [x] Client connection management
-- [x] Receive client messages
-- [x] Send message to connected client
-- [ ] Multiple client support
-- [ ] Thread-per-client model
-- [ ] Thread pool architecture
+- [x] Receive data from clients
+- [x] Send responses to clients
+- [x] Implement move semantics for socket ownership
+- [ ] Support multiple simultaneous clients
+- [ ] Thread-per-client architecture
 - [ ] Synchronization with mutexes
+- [ ] Broadcast messages to all clients
 - [ ] Logging system
 - [ ] Unit tests

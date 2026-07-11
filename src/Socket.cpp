@@ -22,6 +22,29 @@ Socket::Socket(int fd)
 {
 }
 
+Socket::Socket(Socket&& other) noexcept
+    : m_fd(other.m_fd)
+
+{
+    other.m_fd = -1;
+}
+
+Socket& Socket::operator=(Socket&& other) noexcept
+{
+    if (this != &other)
+    {
+        if (m_fd != -1)
+        {
+            close(m_fd);
+        }
+
+        m_fd = other.m_fd;
+        other.m_fd = -1;
+    }
+
+    return *this;
+}
+
 Socket::~Socket()
 {
     if (m_fd != -1)
@@ -73,6 +96,8 @@ Socket Socket::accept()
         throw std::runtime_error("Failed to accept client.");
     }
 
+    // Wrap the accepted file descriptor in a Socket object so the
+    // connection is automatically closed when the object is destroyed.
     return Socket(client_fd);
 }
 

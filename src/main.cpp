@@ -1,33 +1,57 @@
 #include "Socket.h"
 
 #include <iostream>
+#include <thread>
+
+void handleClient(Socket client)
+{
+    try
+    {
+        while (true)
+        {
+            std:: string message = client.receive();
+
+            std::cout 
+                << "Received: "
+                << message
+                << "\n";
+
+            client.send("Message received!\n");
+        }
+    }
+    catch(...)
+    {
+        std::cout
+            << "Client disconnected.\n";
+    }
+    
+}
 
 int main()
 {
     try
     {
-        Socket socket;
+        Socket server;
 
-        socket.bind(8080);
-        socket.listen(10);
+        server.bind(8080);
+        server.listen(10);
 
         std::cout
             << "Server listening on port 8080.\n";
 
-        Socket client = socket.accept();
+        while (true)
+        {
+            Socket client = server.accept();
 
-        std::cout
-            << "Client connected!\n";
+            std::cout
+                << "Client connected.\n";
 
-        std::string message = client.receive();
+            std:: thread clientThread(
+                handleClient,
+                std::move(client));
 
-        std::cout
-            << "Received: "
-            << message
-            << "\n";
-
-        client.send("Message received!\n");
-
+            clientThread.detach();
+        }
     }
     catch(const std::exception& e)
     {
