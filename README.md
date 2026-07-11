@@ -25,6 +25,9 @@ This project is being built incrementally to explore:
 - Thread synchronization with `std::mutex`
 - RAII-based locking with `std::lock_guard`
 - CMake build system
+- Shared ownership using std::shared_ptr
+- Thread-safe resource management
+- Managing shared state between client connections
 
 ## Current Status
 
@@ -64,6 +67,8 @@ Current milestone:
 - Independent client handling
 - Mutex protection for shared output resources
 - RAII-based locking using `std::lock_guard`
+- Client connection manager for tracking active connections
+- Thread-safe storage of connected clients
 
 ### Build System
 
@@ -123,7 +128,7 @@ Message received!
 - [x] Implement move semantics for socket ownership
 - [x] Thread-per-client architecture
 - [x] Synchronization with mutexes
-- [ ] Client connection manager
+- [x] Client connection manager
 - [ ] Broadcast messages between clients
 - [ ] Graceful client disconnect handling
 - [ ] Logging system
