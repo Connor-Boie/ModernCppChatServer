@@ -9,6 +9,13 @@
 #include <unordered_set>
 #include <vector>
 
+enum class LogLevel
+{
+    Info,
+    Warning,
+    Error
+};
+
 class Server
 {
 public:
@@ -49,7 +56,9 @@ private:
         const std::string& message,
         int senderFd);
 
-    void log(const std::string& message);
+    void log(
+        LogLevel level,
+        const std::string& message);
 
     Socket m_listener;
     int m_port;

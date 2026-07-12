@@ -39,6 +39,10 @@ This project is being built incrementally to explore:
 - Associating usernames with client sockets using `std::unordered_map`
 - Parsing commands with `std::istringstream`
 - Safely copying shared resources before releasing a mutex
+- Strongly typed enumerations using `enum class`
+- Date and time handling with `std::chrono`
+- Time formatting with `std::put_time`
+- Selecting output streams through `std::ostream`
 
 ## Current Status
 
@@ -56,6 +60,7 @@ In progress. The server currently:
 - Prevents multiple connected clients from using the same username
 - Supports `/help`, `/users`, and `/quit` chat commands
 - Supports private messages between connected users
+- Produces timestamped server logs with informational, warning, and error levels
 
 ## Implemented Features
 
@@ -109,6 +114,13 @@ In progress. The server currently:
 - RAII locking with `std::lock_guard`
 - Thread-safe connected-client storage
 - Synchronized message broadcasting
+
+### Logging
+
+- Timestamped server log messages
+- Informational, warning, and error log levels
+- Thread-safe console output
+- Error messages written to standard error
 
 ### Build System
 
@@ -170,7 +182,8 @@ After entering a username, type messages to send them to the other connected cli
 - [x] Prevent duplicate usernames
 - [x] Add chat commands
 - [x] Add private messaging
+- [x] Add structured logging
 - [ ] Add graceful server shutdown
-- [ ] Add structured logging
 - [ ] Add unit tests
 - [ ] Add integration tests
+- [ ] Finalize portfolio documentation

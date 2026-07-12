@@ -1,7 +1,10 @@
 #include "Server.h"
 
 #include <algorithm>
+#include <chrono>
+#include <ctime>
 #include <exception>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -18,6 +21,46 @@ void removeLineEnding(std::string& text)
         text.pop_back();
     }
 }
+
+std::string logLevelToString(LogLevel level)
+{
+    switch (level)
+    {
+        case LogLevel::Info:
+            return "INFO";
+
+        case LogLevel::Warning:
+            return "WARNING";
+
+        case LogLevel::Error:
+            return "ERROR";
+    }
+
+    return "UNKNOWN";
+}
+
+std::string currentTimestamp()
+{
+    const auto now =
+        std::chrono::system_clock::now();
+
+    const std::time_t currentTime =
+        std::chrono::system_clock::to_time_t(now);
+
+    std::tm localTime{};
+
+    localtime_r(
+        &currentTime,
+        &localTime);
+
+    std::ostringstream output;
+
+    output << std::put_time(
+        &localTime,
+        "%Y-%m-%d %H:%M:%S");
+
+    return output.str();
+}
 }
 
 Server::Server(int port, int backlog)
@@ -30,6 +73,7 @@ Server::Server(int port, int backlog)
 void Server::run()
 {
     log(
+        LogLevel::Info,
         "Server listening on port "
         + std::to_string(m_port)
         + ".");
@@ -43,6 +87,7 @@ void Server::run()
         addClient(client);
 
         log(
+            LogLevel::Info,
             "Client connected. File descriptor: "
             + std::to_string(client->getFd()));
 
@@ -110,6 +155,7 @@ void Server::handleClient(
                 "Type /help to view available commands.\n");
 
             log(
+                LogLevel::Info,
                 username
                 + " joined the chat. File descriptor: "
                 + std::to_string(clientFd));
@@ -154,6 +200,7 @@ void Server::handleClient(
                 }
 
                 log(
+                    LogLevel::Info,
                     "Received from "
                     + username
                     + ": "
@@ -173,6 +220,7 @@ void Server::handleClient(
     catch (const std::exception& error)
     {
         log(
+            LogLevel::Error,
             "Client "
             + std::to_string(clientFd)
             + " error: "
@@ -189,11 +237,14 @@ void Server::handleClient(
             + " left the chat. ***\n",
             clientFd);
 
-        log(username + " left the chat.");
+        log(
+            LogLevel::Info,
+            username + " left the chat.");
     }
     else
     {
         log(
+            LogLevel::Warning,
             "Client disconnected before choosing a username. "
             "File descriptor: "
             + std::to_string(clientFd));
@@ -379,6 +430,7 @@ void Server::sendPrivateMessage(
             + "\n");
 
         log(
+            LogLevel::Info,
             senderUsername
             + " sent a private message to "
             + recipientUsername
@@ -387,6 +439,7 @@ void Server::sendPrivateMessage(
     catch (const std::exception& error)
     {
         log(
+            LogLevel::Error,
             "Private message delivery failed: "
             + std::string(error.what()));
 
@@ -436,6 +489,7 @@ void Server::broadcast(
         catch (const std::exception& error)
         {
             log(
+                LogLevel::Warning,
                 "Broadcast to client "
                 + std::to_string(client->getFd())
                 + " failed: "
@@ -444,15 +498,28 @@ void Server::broadcast(
     }
 }
 
-void Server::log(const std::string& message)
+void Server::log(
+    LogLevel level,
+    const std::string& message)
 {
     std::lock_guard<std::mutex> lock(
         m_outputMutex);
 
-    std::cout << message;
+    std::ostream& output =
+        level == LogLevel::Error
+            ? std::cerr
+            : std::cout;
+
+    output
+        << '['
+        << currentTimestamp()
+        << "] ["
+        << logLevelToString(level)
+        << "] "
+        << message;
 
     if (message.empty() || message.back() != '\n')
     {
-        std::cout << '\n';
+        output << '\n';
     }
 }
