@@ -30,6 +30,12 @@ private:
     void unregisterUsername(
         const std::string& username);
 
+    void handleCommand(
+        const std::string& command,
+        const std::shared_ptr<Socket>& client);
+
+    [[nodiscard]] std::string buildUserList();
+
     void broadcast(
         const std::string& message,
         int senderFd);

@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <exception>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <thread>
-#include <utility>
 
 namespace
 {
@@ -104,6 +104,9 @@ void Server::handleClient(
                 + username
                 + "!\n");
 
+            client->send(
+                "Type /help to view available commands.\n");
+
             log(
                 username
                 + " joined the chat. File descriptor: "
@@ -129,6 +132,18 @@ void Server::handleClient(
 
                 if (message.empty())
                 {
+                    continue;
+                }
+
+                if (message == "/quit")
+                {
+                    client->send("Goodbye!\n");
+                    break;
+                }
+
+                if (message.front() == '/')
+                {
+                    handleCommand(message, client);
                     continue;
                 }
 
@@ -160,13 +175,13 @@ void Server::handleClient(
 
     if (usernameRegistered)
     {
+        unregisterUsername(username);
+
         broadcast(
             "*** "
             + username
             + " left the chat. ***\n",
             clientFd);
-
-        unregisterUsername(username);
 
         log(username + " left the chat.");
     }
@@ -213,8 +228,8 @@ bool Server::tryRegisterUsername(
     std::lock_guard<std::mutex> lock(
         m_usernamesMutex);
 
-    const auto [iterator, inserted] =
-        m_usernames.insert(username);
+    const bool inserted =
+        m_usernames.insert(username).second;
 
     return inserted;
 }
@@ -226,6 +241,54 @@ void Server::unregisterUsername(
         m_usernamesMutex);
 
     m_usernames.erase(username);
+}
+
+void Server::handleCommand(
+    const std::string& command,
+    const std::shared_ptr<Socket>& client)
+{
+    if (command == "/help")
+    {
+        client->send(
+            "Available commands:\n"
+            "  /help  - Show available commands\n"
+            "  /users - Show connected users\n"
+            "  /quit  - Leave the chat\n");
+
+        return;
+    }
+
+    if (command == "/users")
+    {
+        client->send(buildUserList());
+        return;
+    }
+
+    client->send(
+        "Unknown command: "
+        + command
+        + "\n"
+        + "Type /help to view available commands.\n");
+}
+
+std::string Server::buildUserList()
+{
+    std::lock_guard<std::mutex> lock(
+        m_usernamesMutex);
+
+    std::ostringstream output;
+
+    output
+        << "Connected users ("
+        << m_usernames.size()
+        << "):\n";
+
+    for (const auto& username : m_usernames)
+    {
+        output << "  - " << username << '\n';
+    }
+
+    return output.str();
 }
 
 void Server::broadcast(

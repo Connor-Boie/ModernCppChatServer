@@ -34,6 +34,8 @@ This project is being built incrementally to explore:
 - CMake build configuration
 - Unique-value storage using `std::unordered_set`
 - Atomic check-and-insert operations protected by a mutex
+- Command parsing and control flow
+- Building formatted strings with `std::ostringstream`
 
 ## Current Status
 
@@ -49,6 +51,7 @@ In progress. The server currently:
 - Logs output with mutex protection
 - Cleans up sockets automatically using RAII
 - Prevents multiple connected clients from using the same username
+- Supports `/help`, `/users`, and `/quit` chat commands
 
 ## Implemented Features
 
@@ -75,6 +78,10 @@ In progress. The server currently:
 - Join notifications
 - Leave notifications
 - Automatic guest username for an empty username
+- `/help` command for command documentation
+- `/users` command for viewing connected usernames
+- `/quit` command for clean client disconnection
+- Unknown-command feedback
 
 ### Modern C++
 
@@ -154,7 +161,7 @@ After entering a username, type messages to send them to the other connected cli
 - [x] Broadcast messages between clients
 - [x] Add usernames
 - [x] Prevent duplicate usernames
-- [ ] Add chat commands
+- [x] Add chat commands
 - [ ] Add graceful server shutdown
 - [ ] Add structured logging
 - [ ] Add unit tests
