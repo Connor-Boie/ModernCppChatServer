@@ -16,16 +16,15 @@ public:
 
     ~Socket();
 
-    int getFd() const;
+    [[nodiscard]] int getFd() const noexcept;
 
     void bind(int port);
     void listen(int backlog);
+    [[nodiscard]] Socket accept();
 
-    Socket accept();
-
-    std::string receive();
+    [[nodiscard]] std::string receive();
     void send(const std::string& message);
 
 private:
-    int m_fd;
+    int m_fd{-1};
 };

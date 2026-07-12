@@ -1,3 +1,7 @@
+# Modern C++ TCP Chat Server
+
+A portfolio project demonstrating modern C++17, Linux/POSIX socket programming, RAII, move semantics, multithreading, synchronization, and object-oriented design.
+
 ## Goals
 
 This project is being built incrementally to explore:
@@ -7,7 +11,7 @@ This project is being built incrementally to explore:
 - TCP/IP networking fundamentals
 - Object-oriented design
 - Resource management using RAII
-- Move semantics and ownership models
+- Move semantics and unique ownership
 - Multithreading and synchronization
 - CMake build systems
 - Unit testing
@@ -15,117 +19,107 @@ This project is being built incrementally to explore:
 ## Concepts Demonstrated
 
 - Modern C++17
-- Object-oriented design
 - RAII resource management
 - Move semantics and ownership transfer
 - Deleted copy operations for unique resource ownership
 - POSIX socket programming
 - TCP/IP networking
-- Multithreading with `std::thread`
+- Thread-per-client concurrency with `std::thread`
 - Thread synchronization with `std::mutex`
 - RAII-based locking with `std::lock_guard`
-- CMake build system
-- Thread-safe resource management
+- Separation of responsibilities using `Socket` and `Server` classes
+- CMake build configuration
 
 ## Current Status
 
-In Progress
+In progress. The server currently:
 
-Current milestone:
-
-- TCP server capable of accepting client connections
-- Client communication using send/receive operations
-- Multiple clients handled concurrently using threads
-- Thread-safe logging using mutex protection
+- Creates, binds, and listens on a TCP socket
+- Accepts multiple client connections
+- Handles each client on a detached worker thread
+- Receives messages and sends acknowledgements
+- Logs output with mutex protection
+- Cleans up sockets automatically using RAII
 
 ## Implemented Features
 
 ### Networking
 
-- RAII-based `Socket` class for automatic socket resource management
-- TCP socket creation using the Linux/POSIX socket API
-- IPv4 socket binding to configurable ports
-- Listening for incoming TCP client connections
+- TCP socket creation using Linux/POSIX APIs
+- IPv4 binding to port `8080`
+- Listening for incoming connections
 - Accepting client connections
-- Receiving data from connected clients
-- Sending responses to connected clients
+- Receiving client messages
+- Sending server responses
+- Detection of graceful client disconnects
+- Handling of partial sends
 
 ### Modern C++
 
 - C++17
-- Encapsulation through an object-oriented `Socket` abstraction
-- RAII for automatic resource cleanup
-- Move constructor and move assignment for safe socket ownership transfer
-- Deleted copy constructor and copy assignment operator to prevent invalid resource duplication
+- RAII-based `Socket` ownership
+- Move constructor and move assignment operator
+- Deleted copy constructor and copy assignment operator
 - Exception-based error handling
+- Dedicated `Server` class for server lifecycle management
 
 ### Concurrency
 
-- Thread-per-client architecture using `std::thread`
-- Independent client handling
-- Mutex protection for shared output resources
-- RAII-based locking using `std::lock_guard`
+- Thread-per-client architecture
+- Independent handling of multiple clients
+- Mutex-protected console output
+- RAII locking with `std::lock_guard`
 
 ### Build System
 
 - CMake-based build configuration
 - Out-of-source builds
-- Compiler warnings enabled (`-Wall`, `-Wextra`, `-Wpedantic`)
+- Compiler warnings enabled with `-Wall`, `-Wextra`, and `-Wpedantic`
 
 ## Build
 
 ```bash
-mkdir build
+mkdir -p build
 cd build
-
 cmake ..
 cmake --build .
 ```
 
 ## Run
 
-Start the server:
+Start the server from the project root:
 
 ```bash
-./ModernCppChatServer
+./build/ModernCppChatServer
 ```
 
-Connect using netcat:
+From another terminal, connect with netcat:
 
 ```bash
 nc localhost 8080
 ```
 
-Example:
+Type a message and press Enter. The client should receive:
 
-Server:
-```
-Server listening on port 8080
-Client connected
-Received: hello world
-```
-
-Client:
-```
-hello world
+```text
 Message received!
 ```
 
 ## Roadmap
 
 - [x] Project setup
-- [x] Socket abstraction
-- [x] Create TCP socket
-- [x] Bind socket to address and port
-- [x] Listen for incoming connections
+- [x] RAII socket abstraction
+- [x] TCP socket creation
+- [x] Bind and listen
 - [x] Accept client connections
-- [x] Receive data from clients
-- [x] Send responses to clients
-- [x] Implement move semantics for socket ownership
+- [x] Receive and send data
+- [x] Move-only socket ownership
 - [x] Thread-per-client architecture
-- [x] Synchronization with mutexes
-- [ ] Client connection manager
+- [x] Mutex-protected logging
+- [x] Encapsulate server lifecycle in a `Server` class
+- [ ] Track active clients
 - [ ] Broadcast messages between clients
-- [ ] Graceful client disconnect handling
-- [ ] Logging system
-- [ ] Unit tests
+- [ ] Add usernames
+- [ ] Add graceful server shutdown
+- [ ] Add structured logging
+- [ ] Add unit tests

@@ -1,30 +1,43 @@
 #include "Socket.h"
 
 #include <array>
+#include <cerrno>
+#include <cstring>
 #include <netinet/in.h>
-#include <sys/socket.h>
 #include <stdexcept>
-#include <string>
+#include <sys/socket.h>
 #include <unistd.h>
 
-Socket::Socket()
+namespace
 {
-    m_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+std::runtime_error socketError(const std::string& operation)
+{
+    return std::runtime_error(
+        operation + ": " + std::strerror(errno));
+}
+}
 
+Socket::Socket()
+    : m_fd(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))
+{
     if (m_fd == -1)
     {
-        throw std::runtime_error("Failed to create socket");
+        throw socketError("Failed to create socket");
     }
 }
 
 Socket::Socket(int fd)
     : m_fd(fd)
 {
+    if (m_fd == -1)
+    {
+        throw std::invalid_argument(
+            "Cannot construct Socket from an invalid file descriptor");
+    }
 }
 
 Socket::Socket(Socket&& other) noexcept
     : m_fd(other.m_fd)
-
 {
     other.m_fd = -1;
 }
@@ -35,7 +48,7 @@ Socket& Socket::operator=(Socket&& other) noexcept
     {
         if (m_fd != -1)
         {
-            close(m_fd);
+            ::close(m_fd);
         }
 
         m_fd = other.m_fd;
@@ -49,11 +62,11 @@ Socket::~Socket()
 {
     if (m_fd != -1)
     {
-        close(m_fd);
+        ::close(m_fd);
     }
 }
 
-int Socket::getFd() const
+int Socket::getFd() const noexcept
 {
     return m_fd;
 }
@@ -63,15 +76,16 @@ void Socket::bind(int port)
     sockaddr_in address{};
 
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(port);
+    address.sin_addr.s_addr = htonl(INADDR_ANY);
+    address.sin_port =
+        htons(static_cast<uint16_t>(port));
 
     if (::bind(
-        m_fd,
-        reinterpret_cast<sockaddr*>(&address),
-        sizeof(address)) == -1)
+            m_fd,
+            reinterpret_cast<const sockaddr*>(&address),
+            sizeof(address)) == -1)
     {
-        throw std::runtime_error("Failed to bind socket.");
+        throw socketError("Failed to bind socket");
     }
 }
 
@@ -79,60 +93,68 @@ void Socket::listen(int backlog)
 {
     if (::listen(m_fd, backlog) == -1)
     {
-        throw std::runtime_error("Failed to listen on socket.");
+        throw socketError("Failed to listen on socket");
     }
 }
 
 Socket Socket::accept()
 {
-    int client_fd = ::accept(
-        m_fd,
-        nullptr,
-        nullptr
-    );
+    const int clientFd =
+        ::accept(m_fd, nullptr, nullptr);
 
-    if (client_fd == -1)
+    if (clientFd == -1)
     {
-        throw std::runtime_error("Failed to accept client.");
+        throw socketError("Failed to accept client");
     }
 
-    // Wrap the accepted file descriptor in a Socket object so the
-    // connection is automatically closed when the object is destroyed.
-    return Socket(client_fd);
+    return Socket(clientFd);
 }
 
 std::string Socket::receive()
 {
     std::array<char, 1024> buffer{};
 
-    ssize_t bytesReceived = 
-        recv(
+    const ssize_t bytesReceived =
+        ::recv(
             m_fd,
             buffer.data(),
             buffer.size(),
             0);
-    
+
     if (bytesReceived == -1)
     {
-        throw std::runtime_error("Failed to receive data.");
+        throw socketError("Failed to receive data");
+    }
+
+    if (bytesReceived == 0)
+    {
+        return {};
     }
 
     return std::string(
         buffer.data(),
-        bytesReceived);
+        static_cast<std::size_t>(bytesReceived));
 }
 
 void Socket::send(const std::string& message)
 {
-    ssize_t bytesSent = 
-        ::send(
-            m_fd,
-            message.c_str(),
-            message.size(),
-            0);
-        
-    if (bytesSent == -1)
+    std::size_t totalSent = 0;
+
+    while (totalSent < message.size())
     {
-        throw std::runtime_error("Failed to send data.");
+        const ssize_t bytesSent =
+            ::send(
+                m_fd,
+                message.data() + totalSent,
+                message.size() - totalSent,
+                MSG_NOSIGNAL);
+
+        if (bytesSent == -1)
+        {
+            throw socketError("Failed to send data");
+        }
+
+        totalSent +=
+            static_cast<std::size_t>(bytesSent);
     }
 }

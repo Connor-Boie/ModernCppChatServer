@@ -1,76 +1,21 @@
-#include "Socket.h"
+#include "Server.h"
 
+#include <exception>
 #include <iostream>
-#include <mutex>
-#include <thread>
-
-std::mutex coutMutex;
-
-void handleClient(Socket client)
-{
-    try
-    {
-        while (true)
-        {
-            std::string message = client.receive();
-
-            {
-                std::lock_guard<std::mutex> lock(coutMutex);
-
-                std::cout
-                    << "Received: "
-                    << message
-                    << '\n';
-            }
-
-            client.send("Message received!\n");
-        }
-    }
-    catch (const std::exception&)
-    {
-        std::lock_guard<std::mutex> lock(coutMutex);
-
-        std::cout
-            << "Client disconnected.\n";
-    }
-}
 
 int main()
 {
     try
     {
-        Socket server;
-
-        server.bind(8080);
-        server.listen(10);
-
-        std::cout
-            << "Server listening on port 8080.\n";
-
-        while (true)
-        {
-            Socket client = server.accept();
-
-            {
-                std::lock_guard<std::mutex> lock(coutMutex);
-
-                std::cout
-                    << "Client connected.\n";
-            }
-
-            std::thread clientThread(
-                handleClient,
-                std::move(client));
-
-            clientThread.detach();
-        }
+        Server server(8080);
+        server.run();
     }
-    catch(const std::exception& e)
+    catch (const std::exception& error)
     {
         std::cerr
-            << "Error: "
-            << e.what()
-            << "\n";
+            << "Server error: "
+            << error.what()
+            << '\n';
 
         return 1;
     }
