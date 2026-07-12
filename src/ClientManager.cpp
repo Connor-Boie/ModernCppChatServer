@@ -27,3 +27,13 @@ std::vector<std::shared_ptr<Socket>> ClientManager::getClients()
 
     return m_clients;
 }
+
+void ClientManager::broadcast(const std::string& message)
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    for (const auto& client : m_clients)
+    {
+        client->send(message);
+    }
+}

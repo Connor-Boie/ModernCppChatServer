@@ -15,6 +15,8 @@ public:
 
     std::vector<std::shared_ptr<Socket>> getClients();
 
+    void broadcast(const std::string& message);
+
 private:
     std::vector<std::shared_ptr<Socket>> m_clients;
 

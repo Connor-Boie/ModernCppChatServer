@@ -28,6 +28,8 @@ This project is being built incrementally to explore:
 - Shared ownership using std::shared_ptr
 - Thread-safe resource management
 - Managing shared state between client connections
+- Broadcast messaging
+- Thread-safe shared client management
 
 ## Current Status
 
@@ -51,6 +53,7 @@ Current milestone:
 - Accepting client connections
 - Receiving data from connected clients
 - Sending responses to connected clients
+- Broadcast messages to all connected clients
 
 ### Modern C++
 
@@ -129,7 +132,7 @@ Message received!
 - [x] Thread-per-client architecture
 - [x] Synchronization with mutexes
 - [x] Client connection manager
-- [ ] Broadcast messages between clients
+- [x] Broadcast messages between clients
 - [ ] Graceful client disconnect handling
 - [ ] Logging system
 - [ ] Unit tests

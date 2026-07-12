@@ -1,18 +1,22 @@
+#include "ClientManager.h"
 #include "Socket.h"
 
 #include <iostream>
+#include <memory>
 #include <mutex>
 #include <thread>
 
 std::mutex coutMutex;
 
-void handleClient(Socket client)
+void handleClient(
+    std::shared_ptr<Socket> client, 
+    ClientManager& manager)
 {
     try
     {
         while (true)
         {
-            std:: string message = client.receive();
+            std:: string message = client->receive();
 
             {
                 std::lock_guard<std::mutex> lock(coutMutex);
@@ -23,13 +27,19 @@ void handleClient(Socket client)
                     << "\n";
             }
 
-            client.send("Message received!\n");
+            manager.broadcast(message);
         }
     }
-    catch(...)
+    catch (const std::exception&)
     {
-        std::cout
-            << "Client disconnected.\n";
+        manager.removeClient(client);
+
+        {
+            std::lock_guard<std::mutex> lock(coutMutex);
+
+            std::cout
+                << "Client disconnected.\n";
+        }
     }
     
 }
