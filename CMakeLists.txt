@@ -8,7 +8,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(ModernCppChatServer
     src/main.cpp
     src/Socket.cpp
-    src/ClientManager.cpp
 )
 
 target_include_directories(ModernCppChatServer PRIVATE include)
