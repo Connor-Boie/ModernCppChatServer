@@ -32,6 +32,8 @@ This project is being built incrementally to explore:
 - Thread-safe management of shared client connections
 - Separation of responsibilities using `Socket` and `Server` classes
 - CMake build configuration
+- Unique-value storage using `std::unordered_set`
+- Atomic check-and-insert operations protected by a mutex
 
 ## Current Status
 
@@ -46,6 +48,7 @@ In progress. The server currently:
 - Announces when users join or leave
 - Logs output with mutex protection
 - Cleans up sockets automatically using RAII
+- Prevents multiple connected clients from using the same username
 
 ## Implemented Features
 
@@ -62,6 +65,8 @@ In progress. The server currently:
 - Handling of partial sends
 - Broadcasting messages between connected clients
 - Tracking active client connections
+- Duplicate username prevention
+- Username release when a client disconnects
 
 ### Chat
 
@@ -148,7 +153,7 @@ After entering a username, type messages to send them to the other connected cli
 - [x] Track active clients
 - [x] Broadcast messages between clients
 - [x] Add usernames
-- [ ] Prevent duplicate usernames
+- [x] Prevent duplicate usernames
 - [ ] Add chat commands
 - [ ] Add graceful server shutdown
 - [ ] Add structured logging

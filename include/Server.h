@@ -4,6 +4,8 @@
 
 #include <memory>
 #include <mutex>
+#include <string>
+#include <unordered_set>
 #include <vector>
 
 class Server
@@ -22,6 +24,12 @@ private:
     void addClient(const std::shared_ptr<Socket>& client);
     void removeClient(int clientFd);
 
+    [[nodiscard]] bool tryRegisterUsername(
+        const std::string& username);
+
+    void unregisterUsername(
+        const std::string& username);
+
     void broadcast(
         const std::string& message,
         int senderFd);
@@ -32,7 +40,9 @@ private:
     int m_port;
 
     std::vector<std::shared_ptr<Socket>> m_clients;
+    std::unordered_set<std::string> m_usernames;
 
     std::mutex m_clientsMutex;
+    std::mutex m_usernamesMutex;
     std::mutex m_outputMutex;
 };

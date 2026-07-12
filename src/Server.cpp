@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include <utility>
 
 namespace
 {
@@ -58,69 +59,94 @@ void Server::handleClient(
     std::shared_ptr<Socket> client)
 {
     const int clientFd = client->getFd();
+
     std::string username;
+    bool usernameRegistered = false;
 
     try
     {
-        client->send("Enter your username: ");
-
-        username = client->receive();
-        removeLineEnding(username);
-
-        if (username.empty())
+        while (!usernameRegistered)
         {
-            username =
-                "Guest"
-                + std::to_string(clientFd);
-        }
+            client->send("Enter your username: ");
 
-        client->send(
-            "Welcome, "
-            + username
-            + "!\n");
+            username = client->receive();
 
-        log(
-            username
-            + " joined the chat. File descriptor: "
-            + std::to_string(clientFd));
-
-        broadcast(
-            "*** "
-            + username
-            + " joined the chat. ***\n",
-            clientFd);
-
-        while (true)
-        {
-            std::string message =
-                client->receive();
-
-            if (message.empty())
+            if (username.empty())
             {
                 break;
             }
 
-            removeLineEnding(message);
+            removeLineEnding(username);
 
-            if (message.empty())
+            if (username.empty())
             {
+                client->send(
+                    "Username cannot be empty.\n");
+
                 continue;
             }
 
-            log(
-                "Received from "
+            usernameRegistered =
+                tryRegisterUsername(username);
+
+            if (!usernameRegistered)
+            {
+                client->send(
+                    "That username is already in use. "
+                    "Please choose another.\n");
+            }
+        }
+
+        if (usernameRegistered)
+        {
+            client->send(
+                "Welcome, "
                 + username
-                + ": "
-                + message);
+                + "!\n");
+
+            log(
+                username
+                + " joined the chat. File descriptor: "
+                + std::to_string(clientFd));
 
             broadcast(
-                username
-                + ": "
-                + message
-                + "\n",
+                "*** "
+                + username
+                + " joined the chat. ***\n",
                 clientFd);
 
-            client->send("Message sent.\n");
+            while (true)
+            {
+                std::string message =
+                    client->receive();
+
+                if (message.empty())
+                {
+                    break;
+                }
+
+                removeLineEnding(message);
+
+                if (message.empty())
+                {
+                    continue;
+                }
+
+                log(
+                    "Received from "
+                    + username
+                    + ": "
+                    + message);
+
+                broadcast(
+                    username
+                    + ": "
+                    + message
+                    + "\n",
+                    clientFd);
+
+                client->send("Message sent.\n");
+            }
         }
     }
     catch (const std::exception& error)
@@ -132,13 +158,15 @@ void Server::handleClient(
             + error.what());
     }
 
-    if (!username.empty())
+    if (usernameRegistered)
     {
         broadcast(
             "*** "
             + username
             + " left the chat. ***\n",
             clientFd);
+
+        unregisterUsername(username);
 
         log(username + " left the chat.");
     }
@@ -177,6 +205,27 @@ void Server::removeClient(int clientFd)
                 return client->getFd() == clientFd;
             }),
         m_clients.end());
+}
+
+bool Server::tryRegisterUsername(
+    const std::string& username)
+{
+    std::lock_guard<std::mutex> lock(
+        m_usernamesMutex);
+
+    const auto [iterator, inserted] =
+        m_usernames.insert(username);
+
+    return inserted;
+}
+
+void Server::unregisterUsername(
+    const std::string& username)
+{
+    std::lock_guard<std::mutex> lock(
+        m_usernamesMutex);
+
+    m_usernames.erase(username);
 }
 
 void Server::broadcast(
