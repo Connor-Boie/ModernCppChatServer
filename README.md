@@ -36,6 +36,9 @@ This project is being built incrementally to explore:
 - Atomic check-and-insert operations protected by a mutex
 - Command parsing and control flow
 - Building formatted strings with `std::ostringstream`
+- Associating usernames with client sockets using `std::unordered_map`
+- Parsing commands with `std::istringstream`
+- Safely copying shared resources before releasing a mutex
 
 ## Current Status
 
@@ -52,6 +55,7 @@ In progress. The server currently:
 - Cleans up sockets automatically using RAII
 - Prevents multiple connected clients from using the same username
 - Supports `/help`, `/users`, and `/quit` chat commands
+- Supports private messages between connected users
 
 ## Implemented Features
 
@@ -82,6 +86,9 @@ In progress. The server currently:
 - `/users` command for viewing connected usernames
 - `/quit` command for clean client disconnection
 - Unknown-command feedback
+- Private messaging with `/msg <username> <message>`
+- Confirmation messages for private-message senders
+- Feedback when a private-message recipient is unavailable
 
 ### Modern C++
 
@@ -162,6 +169,8 @@ After entering a username, type messages to send them to the other connected cli
 - [x] Add usernames
 - [x] Prevent duplicate usernames
 - [x] Add chat commands
+- [x] Add private messaging
 - [ ] Add graceful server shutdown
 - [ ] Add structured logging
 - [ ] Add unit tests
+- [ ] Add integration tests

@@ -87,7 +87,9 @@ void Server::handleClient(
             }
 
             usernameRegistered =
-                tryRegisterUsername(username);
+                tryRegisterUsername(
+                    username,
+                    client);
 
             if (!usernameRegistered)
             {
@@ -143,7 +145,11 @@ void Server::handleClient(
 
                 if (message.front() == '/')
                 {
-                    handleCommand(message, client);
+                    handleCommand(
+                        message,
+                        username,
+                        client);
+
                     continue;
                 }
 
@@ -223,7 +229,8 @@ void Server::removeClient(int clientFd)
 }
 
 bool Server::tryRegisterUsername(
-    const std::string& username)
+    const std::string& username,
+    const std::shared_ptr<Socket>& client)
 {
     std::lock_guard<std::mutex> lock(
         m_usernamesMutex);
@@ -231,7 +238,14 @@ bool Server::tryRegisterUsername(
     const bool inserted =
         m_usernames.insert(username).second;
 
-    return inserted;
+    if (!inserted)
+    {
+        return false;
+    }
+
+    m_userSockets[username] = client;
+
+    return true;
 }
 
 void Server::unregisterUsername(
@@ -241,34 +255,144 @@ void Server::unregisterUsername(
         m_usernamesMutex);
 
     m_usernames.erase(username);
+    m_userSockets.erase(username);
 }
 
 void Server::handleCommand(
     const std::string& command,
-    const std::shared_ptr<Socket>& client)
+    const std::string& senderUsername,
+    const std::shared_ptr<Socket>& senderClient)
 {
     if (command == "/help")
     {
-        client->send(
+        senderClient->send(
             "Available commands:\n"
-            "  /help  - Show available commands\n"
-            "  /users - Show connected users\n"
-            "  /quit  - Leave the chat\n");
+            "  /help                  "
+            "- Show available commands\n"
+            "  /users                 "
+            "- Show connected users\n"
+            "  /msg <user> <message>  "
+            "- Send a private message\n"
+            "  /quit                  "
+            "- Leave the chat\n");
 
         return;
     }
 
     if (command == "/users")
     {
-        client->send(buildUserList());
+        senderClient->send(buildUserList());
         return;
     }
 
-    client->send(
+    if (command.rfind("/msg", 0) == 0)
+    {
+        std::istringstream commandStream(command);
+
+        std::string commandName;
+        std::string recipientUsername;
+        std::string privateMessage;
+
+        commandStream
+            >> commandName
+            >> recipientUsername;
+
+        std::getline(
+            commandStream,
+            privateMessage);
+
+        if (
+            !privateMessage.empty()
+            && privateMessage.front() == ' ')
+        {
+            privateMessage.erase(0, 1);
+        }
+
+        if (
+            recipientUsername.empty()
+            || privateMessage.empty())
+        {
+            senderClient->send(
+                "Usage: /msg <username> <message>\n");
+
+            return;
+        }
+
+        sendPrivateMessage(
+            senderUsername,
+            recipientUsername,
+            privateMessage,
+            senderClient);
+
+        return;
+    }
+
+    senderClient->send(
         "Unknown command: "
         + command
         + "\n"
         + "Type /help to view available commands.\n");
+}
+
+void Server::sendPrivateMessage(
+    const std::string& senderUsername,
+    const std::string& recipientUsername,
+    const std::string& message,
+    const std::shared_ptr<Socket>& senderClient)
+{
+    std::shared_ptr<Socket> recipientClient;
+
+    {
+        std::lock_guard<std::mutex> lock(
+            m_usernamesMutex);
+
+        const auto recipient =
+            m_userSockets.find(recipientUsername);
+
+        if (recipient == m_userSockets.end())
+        {
+            senderClient->send(
+                "User not found: "
+                + recipientUsername
+                + "\n");
+
+            return;
+        }
+
+        recipientClient = recipient->second;
+    }
+
+    try
+    {
+        recipientClient->send(
+            "[Private from "
+            + senderUsername
+            + "] "
+            + message
+            + "\n");
+
+        senderClient->send(
+            "[Private to "
+            + recipientUsername
+            + "] "
+            + message
+            + "\n");
+
+        log(
+            senderUsername
+            + " sent a private message to "
+            + recipientUsername
+            + ".");
+    }
+    catch (const std::exception& error)
+    {
+        log(
+            "Private message delivery failed: "
+            + std::string(error.what()));
+
+        senderClient->send(
+            "Could not deliver the private message.\n");
+    }
 }
 
 std::string Server::buildUserList()
