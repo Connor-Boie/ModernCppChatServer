@@ -1,6 +1,6 @@
 # Modern C++ TCP Chat Server
 
-A portfolio project demonstrating modern C++17, Linux/POSIX socket programming, RAII, move semantics, multithreading, synchronization, and object-oriented design.
+A portfolio project demonstrating modern C++17, Linux/POSIX socket programming, RAII, move semantics, multithreading, synchronization, shared ownership, and object-oriented design.
 
 ## Goals
 
@@ -12,6 +12,7 @@ This project is being built incrementally to explore:
 - Object-oriented design
 - Resource management using RAII
 - Move semantics and unique ownership
+- Shared ownership using smart pointers
 - Multithreading and synchronization
 - CMake build systems
 - Unit testing
@@ -22,15 +23,15 @@ This project is being built incrementally to explore:
 - RAII resource management
 - Move semantics and ownership transfer
 - Deleted copy operations for unique resource ownership
+- Shared ownership using `std::shared_ptr`
 - POSIX socket programming
 - TCP/IP networking
 - Thread-per-client concurrency with `std::thread`
 - Thread synchronization with `std::mutex`
 - RAII-based locking with `std::lock_guard`
+- Thread-safe management of shared client connections
 - Separation of responsibilities using `Socket` and `Server` classes
 - CMake build configuration
-- Shared ownership using `std::shared_ptr`
-- Thread-safe management of shared client connections
 
 ## Current Status
 
@@ -39,10 +40,12 @@ In progress. The server currently:
 - Creates, binds, and listens on a TCP socket
 - Accepts multiple client connections
 - Handles each client on a detached worker thread
-- Receives messages and sends acknowledgements
+- Prompts connected clients for a username
+- Receives messages from connected clients
+- Broadcasts messages to other connected clients
+- Announces when users join or leave
 - Logs output with mutex protection
 - Cleans up sockets automatically using RAII
-- Broadcasts messages to other connected clients
 
 ## Implemented Features
 
@@ -50,6 +53,7 @@ In progress. The server currently:
 
 - TCP socket creation using Linux/POSIX APIs
 - IPv4 binding to port `8080`
+- Socket address reuse for quick server restarts
 - Listening for incoming connections
 - Accepting client connections
 - Receiving client messages
@@ -59,14 +63,24 @@ In progress. The server currently:
 - Broadcasting messages between connected clients
 - Tracking active client connections
 
+### Chat
+
+- Username selection when connecting
+- Username-based chat messages
+- Join notifications
+- Leave notifications
+- Automatic guest username for an empty username
+
 ### Modern C++
 
 - C++17
 - RAII-based `Socket` ownership
 - Move constructor and move assignment operator
 - Deleted copy constructor and copy assignment operator
+- Shared client ownership using `std::shared_ptr`
 - Exception-based error handling
 - Dedicated `Server` class for server lifecycle management
+- Internal helper functions using an anonymous namespace
 
 ### Concurrency
 
@@ -85,11 +99,16 @@ In progress. The server currently:
 
 ## Build
 
+Configure the project:
+
 ```bash
-mkdir -p build
-cd build
-cmake ..
-cmake --build .
+cmake -S . -B build
+```
+
+Compile the project:
+
+```bash
+cmake --build build
 ```
 
 ## Run
@@ -106,11 +125,13 @@ From another terminal, connect with netcat:
 nc localhost 8080
 ```
 
-Type a message and press Enter. The client should receive:
+The server asks for a username:
 
 ```text
-Message received!
+Enter your username:
 ```
+
+After entering a username, type messages to send them to the other connected clients.
 
 ## Roadmap
 
@@ -126,7 +147,9 @@ Message received!
 - [x] Encapsulate server lifecycle in a `Server` class
 - [x] Track active clients
 - [x] Broadcast messages between clients
-- [ ] Add usernames
+- [x] Add usernames
+- [ ] Prevent duplicate usernames
+- [ ] Add chat commands
 - [ ] Add graceful server shutdown
 - [ ] Add structured logging
 - [ ] Add unit tests

@@ -6,6 +6,19 @@
 #include <string>
 #include <thread>
 
+namespace
+{
+void removeLineEnding(std::string& text)
+{
+    while (
+        !text.empty()
+        && (text.back() == '\n' || text.back() == '\r'))
+    {
+        text.pop_back();
+    }
+}
+}
+
 Server::Server(int port, int backlog)
     : m_port(port)
 {
@@ -45,12 +58,41 @@ void Server::handleClient(
     std::shared_ptr<Socket> client)
 {
     const int clientFd = client->getFd();
+    std::string username;
 
     try
     {
+        client->send("Enter your username: ");
+
+        username = client->receive();
+        removeLineEnding(username);
+
+        if (username.empty())
+        {
+            username =
+                "Guest"
+                + std::to_string(clientFd);
+        }
+
+        client->send(
+            "Welcome, "
+            + username
+            + "!\n");
+
+        log(
+            username
+            + " joined the chat. File descriptor: "
+            + std::to_string(clientFd));
+
+        broadcast(
+            "*** "
+            + username
+            + " joined the chat. ***\n",
+            clientFd);
+
         while (true)
         {
-            const std::string message =
+            std::string message =
                 client->receive();
 
             if (message.empty())
@@ -58,13 +100,25 @@ void Server::handleClient(
                 break;
             }
 
+            removeLineEnding(message);
+
+            if (message.empty())
+            {
+                continue;
+            }
+
             log(
-                "Received from client "
-                + std::to_string(clientFd)
+                "Received from "
+                + username
                 + ": "
                 + message);
 
-            broadcast(message, clientFd);
+            broadcast(
+                username
+                + ": "
+                + message
+                + "\n",
+                clientFd);
 
             client->send("Message sent.\n");
         }
@@ -78,11 +132,25 @@ void Server::handleClient(
             + error.what());
     }
 
-    removeClient(clientFd);
+    if (!username.empty())
+    {
+        broadcast(
+            "*** "
+            + username
+            + " left the chat. ***\n",
+            clientFd);
 
-    log(
-        "Client disconnected. File descriptor: "
-        + std::to_string(clientFd));
+        log(username + " left the chat.");
+    }
+    else
+    {
+        log(
+            "Client disconnected before choosing a username. "
+            "File descriptor: "
+            + std::to_string(clientFd));
+    }
+
+    removeClient(clientFd);
 }
 
 void Server::addClient(
@@ -115,19 +183,6 @@ void Server::broadcast(
     const std::string& message,
     int senderFd)
 {
-    std::string formattedMessage =
-        "Client "
-        + std::to_string(senderFd)
-        + ": "
-        + message;
-
-    if (
-        formattedMessage.empty()
-        || formattedMessage.back() != '\n')
-    {
-        formattedMessage += '\n';
-    }
-
     std::lock_guard<std::mutex> lock(
         m_clientsMutex);
 
@@ -140,7 +195,7 @@ void Server::broadcast(
 
         try
         {
-            client->send(formattedMessage);
+            client->send(message);
         }
         catch (const std::exception& error)
         {
