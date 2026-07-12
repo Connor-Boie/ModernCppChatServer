@@ -2,7 +2,9 @@
 
 #include "Socket.h"
 
+#include <memory>
 #include <mutex>
+#include <vector>
 
 class Server
 {
@@ -15,10 +17,22 @@ public:
     void run();
 
 private:
-    void handleClient(Socket client);
-    void log(const char* message);
+    void handleClient(std::shared_ptr<Socket> client);
+
+    void addClient(const std::shared_ptr<Socket>& client);
+    void removeClient(int clientFd);
+
+    void broadcast(
+        const std::string& message,
+        int senderFd);
+
+    void log(const std::string& message);
 
     Socket m_listener;
     int m_port;
+
+    std::vector<std::shared_ptr<Socket>> m_clients;
+
+    std::mutex m_clientsMutex;
     std::mutex m_outputMutex;
 };

@@ -29,6 +29,8 @@ This project is being built incrementally to explore:
 - RAII-based locking with `std::lock_guard`
 - Separation of responsibilities using `Socket` and `Server` classes
 - CMake build configuration
+- Shared ownership using `std::shared_ptr`
+- Thread-safe management of shared client connections
 
 ## Current Status
 
@@ -40,6 +42,7 @@ In progress. The server currently:
 - Receives messages and sends acknowledgements
 - Logs output with mutex protection
 - Cleans up sockets automatically using RAII
+- Broadcasts messages to other connected clients
 
 ## Implemented Features
 
@@ -53,6 +56,8 @@ In progress. The server currently:
 - Sending server responses
 - Detection of graceful client disconnects
 - Handling of partial sends
+- Broadcasting messages between connected clients
+- Tracking active client connections
 
 ### Modern C++
 
@@ -69,6 +74,8 @@ In progress. The server currently:
 - Independent handling of multiple clients
 - Mutex-protected console output
 - RAII locking with `std::lock_guard`
+- Thread-safe connected-client storage
+- Synchronized message broadcasting
 
 ### Build System
 
@@ -117,8 +124,8 @@ Message received!
 - [x] Thread-per-client architecture
 - [x] Mutex-protected logging
 - [x] Encapsulate server lifecycle in a `Server` class
-- [ ] Track active clients
-- [ ] Broadcast messages between clients
+- [x] Track active clients
+- [x] Broadcast messages between clients
 - [ ] Add usernames
 - [ ] Add graceful server shutdown
 - [ ] Add structured logging

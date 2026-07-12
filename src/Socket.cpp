@@ -24,6 +24,24 @@ Socket::Socket()
     {
         throw socketError("Failed to create socket");
     }
+
+    const int reuseAddress = 1;
+
+    if (::setsockopt(
+            m_fd,
+            SOL_SOCKET,
+            SO_REUSEADDR,
+            &reuseAddress,
+            sizeof(reuseAddress)) == -1)
+    {
+        const auto error =
+            socketError("Failed to configure socket");
+
+        ::close(m_fd);
+        m_fd = -1;
+
+        throw error;
+    }
 }
 
 Socket::Socket(int fd)
