@@ -2,16 +2,47 @@
 
 #include <algorithm>
 #include <chrono>
+#include <csignal>
 #include <ctime>
 #include <exception>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <thread>
 
 namespace
 {
+volatile std::sig_atomic_t shutdownRequested = 0;
+
+void requestShutdown(int signalNumber)
+{
+    if (signalNumber == SIGINT)
+    {
+        shutdownRequested = 1;
+    }
+}
+
+void installSignalHandler()
+{
+    struct sigaction action
+    {
+    };
+
+    action.sa_handler = requestShutdown;
+    sigemptyset(&action.sa_mask);
+
+    // Do not use SA_RESTART. We want SIGINT to interrupt accept().
+    action.sa_flags = 0;
+
+    if (sigaction(SIGINT, &action, nullptr) == -1)
+    {
+        throw std::runtime_error(
+            "Failed to install SIGINT handler");
+    }
+}
+
 void removeLineEnding(std::string& text)
 {
     while (
@@ -72,32 +103,54 @@ Server::Server(int port, int backlog)
 
 void Server::run()
 {
+    installSignalHandler();
+
     log(
         LogLevel::Info,
         "Server listening on port "
         + std::to_string(m_port)
         + ".");
 
-    while (true)
+    log(
+        LogLevel::Info,
+        "Press Ctrl+C to stop the server.");
+
+    while (!shutdownRequested)
     {
-        auto client =
-            std::make_shared<Socket>(
-                m_listener.accept());
+        try
+        {
+            auto client =
+                std::make_shared<Socket>(
+                    m_listener.accept());
 
-        addClient(client);
+            addClient(client);
 
-        log(
-            LogLevel::Info,
-            "Client connected. File descriptor: "
-            + std::to_string(client->getFd()));
+            log(
+                LogLevel::Info,
+                "Client connected. File descriptor: "
+                + std::to_string(client->getFd()));
 
-        std::thread clientThread(
-            &Server::handleClient,
-            this,
-            client);
+            std::thread clientThread(
+                &Server::handleClient,
+                this,
+                client);
 
-        clientThread.detach();
+            clientThread.detach();
+        }
+        catch (const std::exception&)
+        {
+            if (shutdownRequested)
+            {
+                break;
+            }
+
+            throw;
+        }
     }
+
+    log(
+        LogLevel::Info,
+        "Shutdown requested. Stopping server.");
 }
 
 void Server::handleClient(
