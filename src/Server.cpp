@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <utility>
 
 namespace
 {
@@ -31,29 +32,37 @@ void installSignalHandler()
     };
 
     action.sa_handler = requestShutdown;
-    sigemptyset(&action.sa_mask);
 
-    // Do not use SA_RESTART. We want SIGINT to interrupt accept().
+    sigemptyset(
+        &action.sa_mask);
+
     action.sa_flags = 0;
 
-    if (sigaction(SIGINT, &action, nullptr) == -1)
+    if (sigaction(
+            SIGINT,
+            &action,
+            nullptr) == -1)
     {
         throw std::runtime_error(
             "Failed to install SIGINT handler");
     }
 }
 
-void removeLineEnding(std::string& text)
+void removeLineEnding(
+    std::string& text)
 {
     while (
         !text.empty()
-        && (text.back() == '\n' || text.back() == '\r'))
+        && (
+            text.back() == '\n'
+            || text.back() == '\r'))
     {
         text.pop_back();
     }
 }
 
-std::string logLevelToString(LogLevel level)
+std::string logLevelToString(
+    LogLevel level)
 {
     switch (level)
     {
@@ -76,7 +85,8 @@ std::string currentTimestamp()
         std::chrono::system_clock::now();
 
     const std::time_t currentTime =
-        std::chrono::system_clock::to_time_t(now);
+        std::chrono::system_clock::
+            to_time_t(now);
 
     std::tm localTime{};
 
@@ -94,7 +104,9 @@ std::string currentTimestamp()
 }
 }
 
-Server::Server(int port, int backlog)
+Server::Server(
+    int port,
+    int backlog)
     : m_port(port)
 {
     m_listener.bind(m_port);
@@ -103,6 +115,8 @@ Server::Server(int port, int backlog)
 
 void Server::run()
 {
+    shutdownRequested = 0;
+
     installSignalHandler();
 
     log(
@@ -127,15 +141,15 @@ void Server::run()
 
             log(
                 LogLevel::Info,
-                "Client connected. File descriptor: "
-                + std::to_string(client->getFd()));
+                "Client connected. "
+                "File descriptor: "
+                + std::to_string(
+                    client->getFd()));
 
-            std::thread clientThread(
+            m_clientThreads.emplace_back(
                 &Server::handleClient,
                 this,
                 client);
-
-            clientThread.detach();
         }
         catch (const std::exception&)
         {
@@ -150,13 +164,23 @@ void Server::run()
 
     log(
         LogLevel::Info,
-        "Shutdown requested. Stopping server.");
+        "Shutdown requested. "
+        "Stopping client connections.");
+
+    shutdownClients();
+    joinClientThreads();
+
+    log(
+        LogLevel::Info,
+        "All client threads stopped. "
+        "Server shutdown complete.");
 }
 
 void Server::handleClient(
     std::shared_ptr<Socket> client)
 {
-    const int clientFd = client->getFd();
+    const int clientFd =
+        client->getFd();
 
     std::string username;
     bool usernameRegistered = false;
@@ -165,7 +189,8 @@ void Server::handleClient(
     {
         while (!usernameRegistered)
         {
-            client->send("Enter your username: ");
+            client->send(
+                "Enter your username: ");
 
             username = client->receive();
 
@@ -192,8 +217,9 @@ void Server::handleClient(
             if (!usernameRegistered)
             {
                 client->send(
-                    "That username is already in use. "
-                    "Please choose another.\n");
+                    "That username is already "
+                    "in use. Please choose "
+                    "another.\n");
             }
         }
 
@@ -205,12 +231,14 @@ void Server::handleClient(
                 + "!\n");
 
             client->send(
-                "Type /help to view available commands.\n");
+                "Type /help to view "
+                "available commands.\n");
 
             log(
                 LogLevel::Info,
                 username
-                + " joined the chat. File descriptor: "
+                + " joined the chat. "
+                "File descriptor: "
                 + std::to_string(clientFd));
 
             broadcast(
@@ -219,7 +247,7 @@ void Server::handleClient(
                 + " joined the chat. ***\n",
                 clientFd);
 
-            while (true)
+            while (!shutdownRequested)
             {
                 std::string message =
                     client->receive();
@@ -266,39 +294,47 @@ void Server::handleClient(
                     + "\n",
                     clientFd);
 
-                client->send("Message sent.\n");
+                client->send(
+                    "Message sent.\n");
             }
         }
     }
     catch (const std::exception& error)
     {
-        log(
-            LogLevel::Error,
-            "Client "
-            + std::to_string(clientFd)
-            + " error: "
-            + error.what());
+        if (!shutdownRequested)
+        {
+            log(
+                LogLevel::Error,
+                "Client "
+                + std::to_string(clientFd)
+                + " error: "
+                + error.what());
+        }
     }
 
     if (usernameRegistered)
     {
         unregisterUsername(username);
 
-        broadcast(
-            "*** "
-            + username
-            + " left the chat. ***\n",
-            clientFd);
+        if (!shutdownRequested)
+        {
+            broadcast(
+                "*** "
+                + username
+                + " left the chat. ***\n",
+                clientFd);
+        }
 
         log(
             LogLevel::Info,
             username + " left the chat.");
     }
-    else
+    else if (!shutdownRequested)
     {
         log(
             LogLevel::Warning,
-            "Client disconnected before choosing a username. "
+            "Client disconnected before "
+            "choosing a username. "
             "File descriptor: "
             + std::to_string(clientFd));
     }
@@ -325,9 +361,11 @@ void Server::removeClient(int clientFd)
             m_clients.begin(),
             m_clients.end(),
             [clientFd](
-                const std::shared_ptr<Socket>& client)
+                const std::shared_ptr<
+                    Socket>& client)
             {
-                return client->getFd() == clientFd;
+                return client->getFd()
+                    == clientFd;
             }),
         m_clients.end());
 }
@@ -340,7 +378,8 @@ bool Server::tryRegisterUsername(
         m_usernamesMutex);
 
     const bool inserted =
-        m_usernames.insert(username).second;
+        m_usernames.insert(
+            username).second;
 
     if (!inserted)
     {
@@ -385,13 +424,16 @@ void Server::handleCommand(
 
     if (command == "/users")
     {
-        senderClient->send(buildUserList());
+        senderClient->send(
+            buildUserList());
+
         return;
     }
 
     if (command.rfind("/msg", 0) == 0)
     {
-        std::istringstream commandStream(command);
+        std::istringstream commandStream(
+            command);
 
         std::string commandName;
         std::string recipientUsername;
@@ -417,7 +459,8 @@ void Server::handleCommand(
             || privateMessage.empty())
         {
             senderClient->send(
-                "Usage: /msg <username> <message>\n");
+                "Usage: /msg <username> "
+                "<message>\n");
 
             return;
         }
@@ -435,7 +478,8 @@ void Server::handleCommand(
         "Unknown command: "
         + command
         + "\n"
-        + "Type /help to view available commands.\n");
+        + "Type /help to view "
+        "available commands.\n");
 }
 
 void Server::sendPrivateMessage(
@@ -451,7 +495,8 @@ void Server::sendPrivateMessage(
             m_usernamesMutex);
 
         const auto recipient =
-            m_userSockets.find(recipientUsername);
+            m_userSockets.find(
+                recipientUsername);
 
         if (recipient == m_userSockets.end())
         {
@@ -463,7 +508,8 @@ void Server::sendPrivateMessage(
             return;
         }
 
-        recipientClient = recipient->second;
+        recipientClient =
+            recipient->second;
     }
 
     try
@@ -493,11 +539,13 @@ void Server::sendPrivateMessage(
     {
         log(
             LogLevel::Error,
-            "Private message delivery failed: "
+            "Private message delivery "
+            "failed: "
             + std::string(error.what()));
 
         senderClient->send(
-            "Could not deliver the private message.\n");
+            "Could not deliver the "
+            "private message.\n");
     }
 }
 
@@ -515,7 +563,10 @@ std::string Server::buildUserList()
 
     for (const auto& username : m_usernames)
     {
-        output << "  - " << username << '\n';
+        output
+            << "  - "
+            << username
+            << '\n';
     }
 
     return output.str();
@@ -541,12 +592,45 @@ void Server::broadcast(
         }
         catch (const std::exception& error)
         {
-            log(
-                LogLevel::Warning,
-                "Broadcast to client "
-                + std::to_string(client->getFd())
-                + " failed: "
-                + error.what());
+            if (!shutdownRequested)
+            {
+                log(
+                    LogLevel::Warning,
+                    "Broadcast to client "
+                    + std::to_string(
+                        client->getFd())
+                    + " failed: "
+                    + error.what());
+            }
+        }
+    }
+}
+
+void Server::shutdownClients()
+{
+    std::vector<
+        std::shared_ptr<Socket>> clients;
+
+    {
+        std::lock_guard<std::mutex> lock(
+            m_clientsMutex);
+
+        clients = m_clients;
+    }
+
+    for (const auto& client : clients)
+    {
+        client->shutdown();
+    }
+}
+
+void Server::joinClientThreads()
+{
+    for (auto& clientThread : m_clientThreads)
+    {
+        if (clientThread.joinable())
+        {
+            clientThread.join();
         }
     }
 }
@@ -571,7 +655,9 @@ void Server::log(
         << "] "
         << message;
 
-    if (message.empty() || message.back() != '\n')
+    if (
+        message.empty()
+        || message.back() != '\n')
     {
         output << '\n';
     }

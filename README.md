@@ -47,6 +47,10 @@ This project is being built incrementally to explore:
 - Signal-safe communication using `std::sig_atomic_t`
 - Interrupting blocking system calls
 - Graceful control-flow termination
+- Managing thread lifetimes with `std::thread::join`
+- Interrupting blocked socket reads with `shutdown`
+- Coordinated multithreaded shutdown
+- Copying shared resources before releasing a mutex
 
 ## Current Status
 
@@ -66,6 +70,7 @@ In progress. The server currently:
 - Supports private messages between connected users
 - Produces timestamped server logs with informational, warning, and error levels
 - Handles `Ctrl+C` by exiting the server accept loop cleanly
+- Shuts down connected client sockets and waits for worker threads before exiting
 
 ## Implemented Features
 
@@ -132,6 +137,9 @@ In progress. The server currently:
 - `SIGINT` handling for `Ctrl+C`
 - Clean exit from the blocking server accept loop
 - RAII cleanup of the listening socket
+- Coordinated shutdown of connected client sockets
+- Worker-thread tracking and joining
+- Safe server destruction after client threads finish
 
 ### Build System
 
@@ -195,6 +203,7 @@ After entering a username, type messages to send them to the other connected cli
 - [x] Add private messaging
 - [x] Add structured logging
 - [x] Add graceful server shutdown
+- [x] Stop and join worker threads during shutdown
 - [ ] Add unit tests
 - [ ] Add integration tests
 - [ ] Finalize portfolio documentation

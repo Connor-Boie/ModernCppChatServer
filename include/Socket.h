@@ -25,6 +25,8 @@ public:
     [[nodiscard]] std::string receive();
     void send(const std::string& message);
 
+    void shutdown() noexcept;
+
 private:
     int m_fd{-1};
 };

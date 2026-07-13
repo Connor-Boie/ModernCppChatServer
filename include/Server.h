@@ -5,6 +5,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -19,17 +20,23 @@ enum class LogLevel
 class Server
 {
 public:
-    explicit Server(int port, int backlog = 10);
+    explicit Server(
+        int port,
+        int backlog = 10);
 
     Server(const Server&) = delete;
-    Server& operator=(const Server&) = delete;
+    Server& operator=(
+        const Server&) = delete;
 
     void run();
 
 private:
-    void handleClient(std::shared_ptr<Socket> client);
+    void handleClient(
+        std::shared_ptr<Socket> client);
 
-    void addClient(const std::shared_ptr<Socket>& client);
+    void addClient(
+        const std::shared_ptr<Socket>& client);
+
     void removeClient(int clientFd);
 
     [[nodiscard]] bool tryRegisterUsername(
@@ -56,6 +63,9 @@ private:
         const std::string& message,
         int senderFd);
 
+    void shutdownClients();
+    void joinClientThreads();
+
     void log(
         LogLevel level,
         const std::string& message);
@@ -63,9 +73,13 @@ private:
     Socket m_listener;
     int m_port;
 
-    std::vector<std::shared_ptr<Socket>> m_clients;
+    std::vector<
+        std::shared_ptr<Socket>> m_clients;
 
-    std::unordered_set<std::string> m_usernames;
+    std::vector<std::thread> m_clientThreads;
+
+    std::unordered_set<
+        std::string> m_usernames;
 
     std::unordered_map<
         std::string,
