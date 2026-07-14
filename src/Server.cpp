@@ -661,4 +661,6 @@ void Server::log(
     {
         output << '\n';
     }
+
+    output.flush();
 }
