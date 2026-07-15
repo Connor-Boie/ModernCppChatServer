@@ -1,5 +1,7 @@
 # Modern C++ TCP Chat Server
 
+[![C++ CI](https://github.com/Connor-Boie/ModernCppChatServer/actions/workflows/ci.yml/badge.svg)](https://github.com/Connor-Boie./ModernCppChatServer/actions/workflows/ci.yml)
+
 A multithreaded TCP chat server built with modern C++17 and Linux/POSIX socket APIs.
 
 The project demonstrates socket programming, RAII, move semantics, smart pointers, multithreading, synchronization, command parsing, graceful shutdown, structured logging, and automated integration testing.
@@ -64,6 +66,10 @@ This project is being built incrementally to explore:
 * Extracting pure logic into independently testable utilities
 * Automatic GoogleTest discovery through CMake and CTest
 * Dependency management using CMake `FetchContent`
+* Continuous integration using GitHub Actions
+* Automated builds in a clean Linux environment
+* Automated unit and integration testing on repository changes
+* YAML-based CI workflow configuration
 
 ## Current Status
 
@@ -85,6 +91,7 @@ The server currently:
 * Waits for all worker threads before exiting
 * Cleans up sockets automatically using RAII
 * Includes an automated end-to-end integration test
+* Uses GitHub Actions to build and run all tests automatically
 
 ## Implemented Features
 
@@ -226,10 +233,23 @@ Example output:
 * Automatic discovery of individual C++ test cases
 * Unified C++ and Python test execution through CTest
 
+### Continuous Integration
+
+* Automated CMake configuration
+* Automated C++ compilation
+* Automated GoogleTest execution
+* Automated Python integration-test execution
+* CI runs for pushes and pull requests targeting `main`
+* Manually triggered workflow runs
+* Build-status badge in the README
+
 ## Project Structure
 
 ```text
 ModernCppChatServer/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── CMakeLists.txt
 ├── README.md
 ├── include/
@@ -428,6 +448,21 @@ You can check the port with:
 ss -ltnp | grep :8080
 ```
 
+## Continuous Integration
+
+GitHub Actions automatically configures, builds, and tests the project when:
+
+* A commit is pushed to `main`
+* A pull request targets `main`
+* The workflow is started manually
+
+The workflow runs:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure
+
 ## Graceful Shutdown
 
 Press:
@@ -482,6 +517,6 @@ Example shutdown output:
 * [x] Stop and join worker threads during shutdown
 * [x] Add integration tests
 * [x] Add C++ unit tests
-* [ ] Add continuous integration
+* [x] Add continuous integration
 * [ ] Finalize portfolio documentation
 * [ ] Add architecture and data-flow diagrams
