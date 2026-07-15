@@ -59,6 +59,11 @@ This project is being built incrementally to explore:
 * Programmatic TCP clients
 * Test timeouts and cleanup
 * CMake test registration with CTest
+* C++ unit testing with GoogleTest
+* Arrange–Act–Assert test structure
+* Extracting pure logic into independently testable utilities
+* Automatic GoogleTest discovery through CMake and CTest
+* Dependency management using CMake `FetchContent`
 
 ## Current Status
 
@@ -216,6 +221,10 @@ Example output:
 * Test timeouts
 * Automatic cleanup after failures
 * CTest integration
+* GoogleTest-based C++ unit tests
+* Unit coverage for line-ending cleanup
+* Automatic discovery of individual C++ test cases
+* Unified C++ and Python test execution through CTest
 
 ## Project Structure
 
@@ -225,13 +234,16 @@ ModernCppChatServer/
 ├── README.md
 ├── include/
 │   ├── Server.h
-│   └── Socket.h
+│   ├── Socket.h
+│   └── TextUtils.h
 ├── src/
 │   ├── Server.cpp
 │   ├── Socket.cpp
+│   ├── TextUtils.cpp
 │   └── main.cpp
 └── tests/
-    └── integration_test.py
+    ├── integration_test.py
+    └── TextUtilsTests.cpp
 ```
 
 ## Requirements
@@ -379,6 +391,21 @@ python3 \
     ./build/ModernCppChatServer
 ```
 
+Run only the C++ unit tests:
+
+```bash
+ctest \
+    --test-dir build \
+    -R RemoveLineEndingTest \
+    --output-on-failure
+```
+
+Run the GoogleTest executable directly
+
+```bash
+./build/TextUtilsTests
+```
+
 Expected output:
 
 ```text
@@ -454,7 +481,7 @@ Example shutdown output:
 * [x] Handle `Ctrl+C` gracefully
 * [x] Stop and join worker threads during shutdown
 * [x] Add integration tests
-* [ ] Add C++ unit tests
+* [x] Add C++ unit tests
 * [ ] Add continuous integration
 * [ ] Finalize portfolio documentation
 * [ ] Add architecture and data-flow diagrams

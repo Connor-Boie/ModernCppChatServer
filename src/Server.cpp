@@ -1,4 +1,5 @@
 #include "Server.h"
+#include "TextUtils.h"
 
 #include <algorithm>
 #include <chrono>
@@ -45,19 +46,6 @@ void installSignalHandler()
     {
         throw std::runtime_error(
             "Failed to install SIGINT handler");
-    }
-}
-
-void removeLineEnding(
-    std::string& text)
-{
-    while (
-        !text.empty()
-        && (
-            text.back() == '\n'
-            || text.back() == '\r'))
-    {
-        text.pop_back();
     }
 }
 
@@ -199,7 +187,7 @@ void Server::handleClient(
                 break;
             }
 
-            removeLineEnding(username);
+            text_utils::removeLineEnding(username);
 
             if (username.empty())
             {
@@ -257,7 +245,7 @@ void Server::handleClient(
                     break;
                 }
 
-                removeLineEnding(message);
+                text_utils::removeLineEnding(message);
 
                 if (message.empty())
                 {
