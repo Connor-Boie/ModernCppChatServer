@@ -518,5 +518,5 @@ Example shutdown output:
 * [x] Add integration tests
 * [x] Add C++ unit tests
 * [x] Add continuous integration
+* [x] Add architecture and data-flow diagrams
 * [ ] Finalize portfolio documentation
-* [ ] Add architecture and data-flow diagrams
