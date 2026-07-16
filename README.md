@@ -1,137 +1,72 @@
 # Modern C++ TCP Chat Server
 
-[![C++ CI](https://github.com/Connor-Boie/ModernCppChatServer/actions/workflows/ci.yml/badge.svg)](https://github.com/Connor-Boie./ModernCppChatServer/actions/workflows/ci.yml)
+[![C++ CI](https://github.com/Connor-Boie/ModernCppChatServer/actions/workflows/ci.yml/badge.svg)](https://github.com/Connor-Boie/ModernCppChatServer/actions/workflows/ci.yml)
 
-A multithreaded TCP chat server built with modern C++17 and Linux/POSIX socket APIs.
+A multithreaded TCP chat server built with C++17 and Linux/POSIX socket APIs.
 
-The project demonstrates socket programming, RAII, move semantics, smart pointers, multithreading, synchronization, command parsing, graceful shutdown, structured logging, and automated integration testing.
+The server supports multiple simultaneous clients, unique usernames, public chat, private messaging, command handling, structured logging, graceful shutdown, automated unit tests, end-to-end integration testing, and continuous integration.
 
-## Goals
+## Project Highlights
 
-This project is being built incrementally to explore:
+- Modern C++17 resource management
+- RAII-based socket ownership
+- Move-only file descriptor wrapper
+- Thread-per-client concurrency model
+- Mutex-protected shared state
+- Public and private message routing
+- Graceful `SIGINT` shutdown
+- GoogleTest unit tests
+- Python end-to-end integration testing
+- CMake and CTest integration
+- GitHub Actions continuous integration
+- Architecture and data-flow documentation
 
-* Modern C++17 programming practices
-* Linux/POSIX socket programming
-* TCP/IP networking fundamentals
-* Object-oriented design
-* Resource management using RAII
-* Move semantics and unique ownership
-* Shared ownership using smart pointers
-* Multithreading and synchronization
-* Thread-safe shared state
-* Command parsing
-* Signal handling
-* Automated testing
-* CMake build systems
+## Architecture
 
-## Concepts Demonstrated
+The server uses one listening socket and creates one worker thread for each connected client.
 
-* Modern C++17
-* RAII resource management
-* Move semantics and ownership transfer
-* Deleted copy operations for unique resource ownership
-* Shared ownership using `std::shared_ptr`
-* POSIX socket programming
-* TCP/IP networking
-* Thread-per-client concurrency with `std::thread`
-* Thread synchronization with `std::mutex`
-* RAII-based locking with `std::lock_guard`
-* Thread-safe management of shared client connections
-* Separation of responsibilities using `Socket` and `Server` classes
-* Unique-value storage using `std::unordered_set`
-* Associating usernames with client sockets using `std::unordered_map`
-* Atomic check-and-insert operations protected by a mutex
-* Command parsing and control flow
-* Parsing command arguments with `std::istringstream`
-* Building formatted strings with `std::ostringstream`
-* Safely copying shared resources before releasing a mutex
-* Strongly typed enumerations using `enum class`
-* Date and time handling with `std::chrono`
-* Time formatting with `std::put_time`
-* Selecting output streams through `std::ostream`
-* Linux signal handling with `sigaction`
-* Signal-safe communication using `std::sig_atomic_t`
-* Interrupting blocking system calls
-* Graceful control-flow termination
-* Managing thread lifetimes with `std::thread::join`
-* Interrupting blocked socket reads with `shutdown`
-* Coordinated multithreaded shutdown
-* End-to-end integration testing
-* Automated process management
-* Programmatic TCP clients
-* Test timeouts and cleanup
-* CMake test registration with CTest
-* C++ unit testing with GoogleTest
-* Arrange–Act–Assert test structure
-* Extracting pure logic into independently testable utilities
-* Automatic GoogleTest discovery through CMake and CTest
-* Dependency management using CMake `FetchContent`
-* Continuous integration using GitHub Actions
-* Automated builds in a clean Linux environment
-* Automated unit and integration testing on repository changes
-* YAML-based CI workflow configuration
+Each worker thread:
 
-## Current Status
+1. Registers a unique username.
+2. Waits for incoming TCP data.
+3. Processes commands or public messages.
+4. Routes private messages by username.
+5. Removes the client during disconnection.
+6. Exits cleanly during server shutdown.
 
-The server currently:
+Shared client, username, and logging state is protected using mutexes.
 
-* Creates, binds, and listens on a TCP socket
-* Accepts multiple simultaneous client connections
-* Handles each client on a worker thread
-* Tracks connected client sockets
-* Prompts clients to choose usernames
-* Prevents duplicate active usernames
-* Receives and broadcasts public messages
-* Supports private messages between connected users
-* Announces when users join or leave
-* Supports `/help`, `/users`, `/msg`, and `/quit`
-* Produces timestamped logs with informational, warning, and error levels
-* Handles `Ctrl+C` using `SIGINT`
-* Stops connected client sockets during shutdown
-* Waits for all worker threads before exiting
-* Cleans up sockets automatically using RAII
-* Includes an automated end-to-end integration test
-* Uses GitHub Actions to build and run all tests automatically
+For detailed component, synchronization, message-flow, and shutdown diagrams, see:
 
-## Implemented Features
+[Architecture and Data-Flow Documentation](docs/ARCHITECTURE.md)
+
+## Features
 
 ### Networking
 
-* TCP socket creation using Linux/POSIX APIs
-* IPv4 binding to port `8080`
-* Socket address reuse using `SO_REUSEADDR`
-* Listening for incoming TCP connections
-* Accepting multiple client connections
-* Receiving client messages
-* Sending server responses
-* Detection of graceful client disconnects
-* Handling of partial sends
-* Prevention of `SIGPIPE` using `MSG_NOSIGNAL`
-* Broadcasting messages between connected clients
-* Tracking active client connections
-* Interrupting blocked socket operations during shutdown
+- TCP socket creation using Linux/POSIX APIs
+- IPv4 binding on port `8080`
+- `SO_REUSEADDR` support
+- Listening for incoming connections
+- Multiple simultaneous clients
+- Partial-send handling
+- Graceful disconnect detection
+- `SIGPIPE` prevention using `MSG_NOSIGNAL`
+- Socket shutdown for interrupting blocked receive operations
 
 ### Chat
 
-* Username selection when connecting
-* Duplicate username prevention
-* Username release when a client disconnects
-* Username-based public chat messages
-* Join notifications
-* Leave notifications
-* Private messaging using:
+- Unique username registration
+- Duplicate username prevention
+- Public-message broadcasting
+- Join and leave notifications
+- Private messaging by username
+- Connected-user listing
+- Sender confirmation messages
+- Unknown-command handling
+- Clean client disconnection
 
-```text
-/msg <username> <message>
-```
-
-* Confirmation messages for private-message senders
-* Feedback when a private-message recipient is unavailable
-* Unknown-command feedback
-
-### Commands
-
-The following chat commands are supported:
+### Supported Commands
 
 ```text
 /help
@@ -143,7 +78,7 @@ Displays the available commands.
 /users
 ```
 
-Displays the usernames of currently connected users.
+Displays currently connected usernames.
 
 ```text
 /msg <username> <message>
@@ -155,93 +90,53 @@ Sends a private message to one connected user.
 /quit
 ```
 
-Disconnects from the chat cleanly.
+Disconnects from the server cleanly.
 
 ### Modern C++
 
-* C++17
-* RAII-based `Socket` ownership
-* Move constructor and move assignment operator
-* Deleted copy constructor and copy assignment operator
-* Shared client ownership using `std::shared_ptr`
-* Exception-based error handling
-* Dedicated `Server` class for server lifecycle management
-* Internal helper functions using anonymous namespaces
-* `[[nodiscard]]` annotations
-* `noexcept` move and cleanup operations
-* `std::unordered_set` for unique usernames
-* `std::unordered_map` for username-to-socket lookup
-* `std::ostringstream` and `std::istringstream`
-* Strongly typed logging levels using `enum class`
-
-### Concurrency
-
-* Thread-per-client architecture
-* Independent handling of multiple clients
-* Worker-thread storage using `std::vector<std::thread>`
-* Worker-thread cleanup using `join()`
-* Mutex-protected console output
-* Thread-safe connected-client storage
-* Thread-safe username registration
-* Thread-safe username-to-socket lookup
-* RAII locking with `std::lock_guard`
-* Coordinated shutdown of blocked worker threads
-* Safe server destruction after all workers finish
+- C++17
+- RAII resource management
+- Move constructor and move assignment operator
+- Deleted copy operations
+- `std::shared_ptr` for shared client lifetime management
+- `std::thread` worker threads
+- `std::mutex` and `std::lock_guard`
+- `std::unordered_set` for unique usernames
+- `std::unordered_map` for username-to-socket lookup
+- Exception-based error handling
+- Strongly typed logging levels with `enum class`
+- Independent utility functions for testable logic
 
 ### Logging
 
-* Timestamped server log messages
-* Informational, warning, and error log levels
-* Thread-safe console output
-* Error messages written to standard error
-* Explicit stream flushing for redirected output and automated tests
+Server activity is logged with timestamps and severity levels.
 
-Example output:
+Example:
 
 ```text
-[2026-07-13 20:14:32] [INFO] Server listening on port 8080.
-[2026-07-13 20:14:37] [INFO] Connor joined the chat. File descriptor: 4
-[2026-07-13 20:15:02] [WARNING] Broadcast to client 5 failed: Broken pipe
+[2026-07-16 19:30:12] [INFO] Server listening on port 8080.
+[2026-07-16 19:30:18] [INFO] Connor joined the chat. File descriptor: 4
+[2026-07-16 19:31:07] [WARNING] Broadcast to client 5 failed: Broken pipe
 ```
 
-### Shutdown
+Log output is protected by a mutex so messages from multiple worker threads do not become interleaved.
 
-* `SIGINT` handling for `Ctrl+C`
-* Clean exit from the blocking server accept loop
-* Signal-safe shutdown request flag
-* Shutdown of connected client sockets
-* Interruption of blocked `recv()` calls
-* Worker-thread tracking and joining
-* RAII cleanup of socket file descriptors
-* Safe server destruction after client threads finish
+Output streams are explicitly flushed so startup and shutdown logs remain visible when the server is run through automated tests.
 
-### Testing
+### Graceful Shutdown
 
-* Automated server startup
-* Automated TCP client connections
-* Username-registration verification
-* Public-message broadcast verification
-* Connected-user command verification
-* Private-message verification
-* Clean-disconnection verification
-* Graceful shutdown verification
-* Test timeouts
-* Automatic cleanup after failures
-* CTest integration
-* GoogleTest-based C++ unit tests
-* Unit coverage for line-ending cleanup
-* Automatic discovery of individual C++ test cases
-* Unified C++ and Python test execution through CTest
+Pressing `Ctrl+C` sends `SIGINT` to the server.
 
-### Continuous Integration
+The server then:
 
-* Automated CMake configuration
-* Automated C++ compilation
-* Automated GoogleTest execution
-* Automated Python integration-test execution
-* CI runs for pushes and pull requests targeting `main`
-* Manually triggered workflow runs
-* Build-status badge in the README
+1. Sets a shutdown-requested flag.
+2. Exits the blocking accept loop.
+3. Stops accepting new clients.
+4. Shuts down active client sockets.
+5. Wakes worker threads blocked in `recv()`.
+6. Waits for all worker threads using `join()`.
+7. Releases remaining socket resources through RAII.
+8. Exits cleanly.
 
 ## Project Structure
 
@@ -250,36 +145,40 @@ ModernCppChatServer/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml
-├── CMakeLists.txt
-├── README.md
+├── docs/
+│   └── ARCHITECTURE.md
 ├── include/
 │   ├── Server.h
 │   ├── Socket.h
 │   └── TextUtils.h
 ├── src/
+│   ├── main.cpp
 │   ├── Server.cpp
 │   ├── Socket.cpp
-│   ├── TextUtils.cpp
-│   └── main.cpp
-└── tests/
-    ├── integration_test.py
-    └── TextUtilsTests.cpp
+│   └── TextUtils.cpp
+├── tests/
+│   ├── integration_test.py
+│   └── TextUtilsTests.cpp
+├── CMakeLists.txt
+└── README.md
 ```
 
 ## Requirements
 
-* Linux or WSL
-* C++17-compatible compiler
-* CMake 3.16 or newer
-* POSIX thread support
-* Python 3
-* Netcat for manual testing
+- Linux or Windows Subsystem for Linux
+- C++17-compatible compiler
+- CMake 3.16 or newer
+- POSIX thread support
+- Python 3
+- Git
+- Internet access during the first CMake configuration so `FetchContent` can retrieve GoogleTest
+- Netcat for optional manual testing
 
-On Ubuntu or WSL, useful packages can be installed with:
+On Ubuntu or WSL:
 
 ```bash
 sudo apt update
-sudo apt install build-essential cmake python3 netcat-openbsd
+sudo apt install build-essential cmake git python3 netcat-openbsd
 ```
 
 ## Configure
@@ -287,131 +186,109 @@ sudo apt install build-essential cmake python3 netcat-openbsd
 From the project root:
 
 ```bash
-cmake -S . -B build
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 ```
 
-This tells CMake:
-
-* `-S .` — use the current directory as the source directory
-* `-B build` — generate build files inside the `build` directory
+The first configuration downloads the pinned GoogleTest dependency.
 
 ## Build
 
 ```bash
-cmake --build build
+cmake --build build --parallel
 ```
 
-## Run
+This builds:
 
-Start the server:
+```text
+ModernCppChatServer
+TextUtilsTests
+```
+
+## Run the Server
 
 ```bash
 ./build/ModernCppChatServer
 ```
 
-The server listens on port `8080`.
-
-Example output:
+The server listens on:
 
 ```text
-[2026-07-13 20:14:32] [INFO] Server listening on port 8080.
-[2026-07-13 20:14:32] [INFO] Press Ctrl+C to stop the server.
+127.0.0.1:8080
 ```
 
 ## Connect Manually
 
-Open another terminal and run:
+Open another terminal:
 
 ```bash
 nc localhost 8080
 ```
 
-The server prompts:
+Open additional terminals with the same command to connect multiple clients.
 
-```text
-Enter your username:
-```
-
-Enter a unique username and begin sending messages.
-
-Open additional terminals with the same command to simulate multiple clients:
-
-```bash
-nc localhost 8080
-```
-
-## Example Chat Session
-
-Client 1:
+Example:
 
 ```text
 Enter your username: Connor
 Welcome, Connor!
 Type /help to view available commands.
-Hello everyone
-Message sent.
 ```
 
-Client 2:
+## Example Public Chat
+
+Connor sends:
 
 ```text
-Enter your username: Alice
-Welcome, Alice!
-Type /help to view available commands.
+Hello everyone
+```
+
+Other clients receive:
+
+```text
 Connor: Hello everyone
 ```
 
-Private-message example:
+Connor receives:
 
 ```text
-/msg Alice Hello privately
+Message sent.
 ```
 
-Sender receives:
+## Example Private Message
+
+Connor sends:
 
 ```text
-[Private to Alice] Hello privately
+/msg Alice Secret message
 ```
 
-Recipient receives:
+Alice receives:
 
 ```text
-[Private from Connor] Hello privately
+[Private from Connor] Secret message
 ```
 
-## Run Tests
+Connor receives:
 
-Configure and build the project first:
+```text
+[Private to Alice] Secret message
+```
+
+## Testing
+
+The project uses two testing levels.
+
+### C++ Unit Tests
+
+GoogleTest verifies isolated C++ utility logic.
+
+Run the unit-test executable directly:
 
 ```bash
-cmake -S . -B build
-cmake --build build
+./build/TextUtilsTests
 ```
 
-Run all registered tests:
-
-```bash
-ctest --test-dir build --output-on-failure
-```
-
-Run only the chat-server integration test:
-
-```bash
-ctest \
-    --test-dir build \
-    -R ChatServerIntegration \
-    --output-on-failure
-```
-
-Run the Python integration test directly:
-
-```bash
-python3 \
-    tests/integration_test.py \
-    ./build/ModernCppChatServer
-```
-
-Run only the C++ unit tests:
+Run only the discovered line-ending tests through CTest:
 
 ```bash
 ctest \
@@ -420,29 +297,47 @@ ctest \
     --output-on-failure
 ```
 
-Run the GoogleTest executable directly
+### Python Integration Test
+
+The Python integration test treats the server as an external process.
+
+It verifies:
+
+- Server startup
+- TCP client connections
+- Username registration
+- Public-message broadcasting
+- `/users`
+- Private messaging
+- `/quit`
+- Graceful `SIGINT` shutdown
+- Clean process termination
+
+Run it directly:
 
 ```bash
-./build/TextUtilsTests
+python3 \
+    tests/integration_test.py \
+    ./build/ModernCppChatServer
 ```
 
-Expected output:
+### Complete Test Suite
 
-```text
-Starting server...
-Connecting Connor...
-Connecting Alice...
-Testing public broadcast...
-Testing /users...
-Testing private messaging...
-Testing /quit...
-Testing graceful server shutdown...
-Integration test passed.
+Run all C++ and Python tests:
+
+```bash
+ctest --test-dir build --output-on-failure
 ```
 
-Make sure another server instance is not already running on port `8080` before starting the integration test.
+For verbose output:
 
-You can check the port with:
+```bash
+ctest --test-dir build -V
+```
+
+Make sure another server instance is not already using port `8080` before running the integration test.
+
+Check the port with:
 
 ```bash
 ss -ltnp | grep :8080
@@ -452,71 +347,138 @@ ss -ltnp | grep :8080
 
 GitHub Actions automatically configures, builds, and tests the project when:
 
-* A commit is pushed to `main`
-* A pull request targets `main`
-* The workflow is started manually
+- A commit is pushed to `main`
+- A pull request targets `main`
+- The workflow is run manually
 
-The workflow runs:
+The workflow performs:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build --parallel
 ctest --test-dir build --output-on-failure
-
-## Graceful Shutdown
-
-Press:
-
-```text
-Ctrl+C
 ```
 
-in the server terminal.
+The build status is displayed by the badge at the top of this README.
 
-The server:
+## Design Decisions
 
-1. Receives `SIGINT`.
-2. Interrupts the blocking `accept()` call.
-3. Stops accepting new clients.
-4. Shuts down connected client sockets.
-5. Wakes worker threads blocked in `recv()`.
-6. Waits for all worker threads using `join()`.
-7. Destroys socket resources through RAII.
-8. Exits cleanly.
+### RAII Socket Ownership
 
-Example shutdown output:
+Each `Socket` object owns exactly one file descriptor and closes it during destruction.
 
-```text
-[2026-07-13 20:20:00] [INFO] Shutdown requested. Stopping client connections.
-[2026-07-13 20:20:00] [INFO] Connor left the chat.
-[2026-07-13 20:20:00] [INFO] Alice left the chat.
-[2026-07-13 20:20:00] [INFO] All client threads stopped. Server shutdown complete.
-```
+Copy operations are disabled because copying a raw file descriptor would create unclear ownership and could result in closing the same descriptor more than once.
+
+Move operations transfer ownership safely.
+
+### Thread Per Client
+
+Each connected client receives a dedicated worker thread.
+
+This design provides straightforward blocking control flow and makes the relationship between a client and its worker easy to understand.
+
+A large production server might instead use:
+
+- A thread pool
+- Nonblocking sockets
+- `select`
+- `poll`
+- `epoll`
+- An event-driven architecture
+
+### Shared Client Ownership
+
+Client sockets use `std::shared_ptr` because a socket can temporarily be referenced by:
+
+- The active-client collection
+- Its worker thread
+- The username lookup map
+- A broadcast operation
+- A private-message operation
+- The shutdown process
+
+The underlying file descriptor is still owned by one `Socket` object.
+
+### Separate Testing Tools
+
+GoogleTest is used for isolated C++ behavior.
+
+Python is used for process orchestration and end-to-end TCP testing.
+
+CTest provides one command for running both test types.
+
+## Current Limitations
+
+- The server supports Linux/POSIX environments rather than Windows sockets.
+- Messages are newline-delimited rather than length-prefixed.
+- The server uses one operating-system thread per client.
+- The listening port is currently fixed at `8080`.
+- Chat messages are not encrypted.
+- Users are not authenticated.
+- Connected-client storage may retain completed joinable thread objects until server shutdown.
+- The project is intended as a systems-programming portfolio project rather than a production chat service.
+
+## Potential Future Improvements
+
+- Configurable address and port
+- Length-prefixed message framing
+- Additional command-parser unit tests
+- Stress and concurrency testing
+- AddressSanitizer and UndefinedBehaviorSanitizer builds
+- Multiple compiler configurations in CI
+- Per-client outgoing-message queues
+- Thread-pool or event-driven architecture
+- Authentication
+- TLS encryption
+
+## Skills Demonstrated
+
+- Modern C++ development
+- Linux systems programming
+- TCP/IP socket programming
+- Object-oriented design
+- Resource ownership and RAII
+- Move semantics
+- Multithreading
+- Synchronization
+- Shared-state management
+- Signal handling
+- CMake
+- GoogleTest
+- CTest
+- Python test automation
+- GitHub Actions
+- Technical documentation
+- Architecture communication
 
 ## Roadmap
 
-* [x] Project setup
-* [x] RAII socket abstraction
-* [x] TCP socket creation
-* [x] Bind and listen
-* [x] Accept client connections
-* [x] Receive and send data
-* [x] Handle partial sends
-* [x] Move-only socket ownership
-* [x] Thread-per-client architecture
-* [x] Mutex-protected logging
-* [x] Encapsulate server lifecycle in a `Server` class
-* [x] Track active clients
-* [x] Broadcast messages between clients
-* [x] Add usernames
-* [x] Prevent duplicate usernames
-* [x] Add chat commands
-* [x] Add private messaging
-* [x] Add timestamped structured logging
-* [x] Handle `Ctrl+C` gracefully
-* [x] Stop and join worker threads during shutdown
-* [x] Add integration tests
-* [x] Add C++ unit tests
-* [x] Add continuous integration
-* [x] Add architecture and data-flow diagrams
-* [ ] Finalize portfolio documentation
+- [x] Project setup
+- [x] RAII socket abstraction
+- [x] TCP socket creation
+- [x] Bind and listen
+- [x] Accept client connections
+- [x] Receive and send data
+- [x] Handle partial sends
+- [x] Move-only socket ownership
+- [x] Thread-per-client architecture
+- [x] Mutex-protected logging
+- [x] Server lifecycle encapsulation
+- [x] Active-client tracking
+- [x] Public-message broadcasting
+- [x] Username registration
+- [x] Duplicate username prevention
+- [x] Chat commands
+- [x] Private messaging
+- [x] Timestamped structured logging
+- [x] Graceful `Ctrl+C` handling
+- [x] Worker-thread shutdown and joining
+- [x] Python integration tests
+- [x] GoogleTest C++ unit tests
+- [x] GitHub Actions continuous integration
+- [x] Architecture and data-flow documentation
+- [x] Portfolio documentation
+
+## License
+
+This project is available for educational and portfolio purposes.
